@@ -6,102 +6,202 @@ import {
   getTerrainRgbTileJsonUrl
 } from '@/lib/styles/tileUrl';
 
-const defaultPalette: ColorPalette = {
-  id: 'dark-gold',
-  name: 'Gold Standard',
-  background: '#0A0A0F',      // Near black with slight blue
-  primary: '#D4AF37',         // Gold
-  secondary: '#5A4E1A',       // residential gold
-  water: '#06080D',           // Darker than background
-  greenSpace: '#0A0F0A',      // Dark with green hint
-  text: '#D4AF37',
-  accent: '#E8C547',
-  contour: '#7A6820',
-  population: '#D4AF37',
-  roads: {
-    motorway: '#D4AF37',      // Gold
-    trunk: '#C9A432',
-    primary: '#BFA030',
-    secondary: '#9A8228',
-    tertiary: '#7A6820',
-    residential: '#5A4E1A',
-    service: '#3A3410',
-  },
-  landuse: '#0F0F14',
-  waterLine: '#1A1A25',
-  parks: '#0A0F0A',
-  buildings: '#12121A',
-  border: '#D4AF37',
-};
-
 const goldPalette: ColorPalette = {
   id: 'dark-gold',
   name: 'Gold Standard',
-  background: '#0A0A0A', // near black
-  primary: '#D4AF37',    // gold
-  secondary: '#8B7355',  // tan-brown
-  water: '#1A1A2E',      // dark blue-black
-  greenSpace: '#0F1A0F', // dark forest
+  style: 'dark-mode',
+  
+  background: '#0A0A0F',
   text: '#D4AF37',
-  accent: '#E8C547',     // bright gold
-  contour: '#8B7355',
-  population: '#D4AF37',
+  border: '#D4AF37',
+  
+  roads: {
+    motorway: '#E8C547',
+    trunk: '#D4AF37',
+    primary: '#C9A432',
+    secondary: '#B89428',
+    tertiary: '#9A8228',
+    residential: '#7A6820',
+    service: '#5A4E1A',
+  },
+  
+  water: '#06080D',
+  waterLine: '#1A1A25',
+  greenSpace: '#0A0F0A',
+  landuse: '#0C0C12',
+  buildings: '#12121A',
+  
+  accent: '#E8C547',
 };
 
-const roseNightPalette: ColorPalette = {
+const defaultPalette = goldPalette;
+
+const silverPalette: ColorPalette = {
+  id: 'dark-silver',
+  name: 'Silver City',
+  style: 'dark-mode',
+  
+  background: '#0C0C10',
+  text: '#C0C0C8',
+  border: '#C0C0C8',
+  
+  roads: {
+    motorway: '#E8E8F0',
+    trunk: '#D0D0D8',
+    primary: '#C0C0C8',
+    secondary: '#A8A8B0',
+    tertiary: '#888890',
+    residential: '#686870',
+    service: '#484850',
+  },
+  
+  water: '#08080C',
+  waterLine: '#18181C',
+  greenSpace: '#0C100C',
+  landuse: '#0E0E12',
+  buildings: '#141418',
+  
+  accent: '#E8E8F0',
+};
+
+const rosePalette: ColorPalette = {
   id: 'dark-rose',
   name: 'Rose Night',
-  background: '#1A0F14', // deep burgundy-black
-  primary: '#F5E6E8',    // pale pink-white
-  secondary: '#8B7E7E',
-  water: '#1A1A2E',
-  greenSpace: '#0F1A14',
-  text: '#E8B4B8',       // rose gold
+  style: 'dark-mode',
+  
+  background: '#1A0F14',
+  text: '#E8B4B8',
+  border: '#E8B4B8',
+  
+  roads: {
+    motorway: '#F5D0D4',
+    trunk: '#E8B4B8',
+    primary: '#D8A0A4',
+    secondary: '#C08888',
+    tertiary: '#A07070',
+    residential: '#805858',
+    service: '#604040',
+  },
+  
+  water: '#0F0A10',
+  waterLine: '#2A1A20',
+  greenSpace: '#0F1410',
+  landuse: '#1C1218',
+  buildings: '#201820',
+  
   accent: '#E8B4B8',
-  contour: '#8B7E7E',
-  population: '#E8B4B8',
 };
 
-const neonNoirPalette: ColorPalette = {
+const neonPalette: ColorPalette = {
   id: 'dark-neon',
   name: 'Neon Noir',
-  background: '#0B0B1A', // deep blue-black
-  primary: '#00F5FF',    // cyan
-  secondary: '#FFFFFF',  // white
-  water: '#0F1A2E',      // dark blue
-  greenSpace: '#0A1F0A', // dark green
+  style: 'dark-mode',
+  
+  background: '#0B0B1A',
   text: '#FFFFFF',
+  border: '#00E5FF',
+  
+  roads: {
+    motorway: '#00F5FF',
+    trunk: '#00E5EE',
+    primary: '#00D4DD',
+    secondary: '#00B8C0',
+    tertiary: '#009099',
+    residential: '#006870',
+    service: '#004048',
+  },
+  
+  water: '#050510',
+  waterLine: '#0A1020',
+  greenSpace: '#0A140A',
+  landuse: '#0D0D1E',
+  buildings: '#10102A',
+  
   accent: '#00F5FF',
-  contour: '#00F5FF',
-  population: '#00F5FF',
 };
 
-const classicDarkPalette: ColorPalette = {
-  id: 'dark-classic',
+const navyPalette: ColorPalette = {
+  id: 'dark-navy',
   name: 'Deep Navy',
-  background: '#0B1929', // deep navy
-  primary: '#F5F5F5',    // white
-  secondary: '#A0A0A0',
-  water: '#1A1A2E',
-  greenSpace: '#0A1A0A',
+  style: 'dark-mode',
+  
+  background: '#0B1929',
   text: '#F5F5F5',
+  border: '#F5F5F5',
+  
+  roads: {
+    motorway: '#FFFFFF',
+    trunk: '#F0F0F0',
+    primary: '#E0E0E0',
+    secondary: '#C8C8C8',
+    tertiary: '#A8A8A8',
+    residential: '#808080',
+    service: '#585858',
+  },
+  
+  water: '#061220',
+  waterLine: '#102030',
+  greenSpace: '#0A1A10',
+  landuse: '#0D1C2C',
+  buildings: '#101F30',
+  
   accent: '#F5F5F5',
-  contour: '#A0A0A0',
-  population: '#F5F5F5',
 };
 
-const charcoalCyanPalette: ColorPalette = {
-  id: 'dark-cyan',
-  name: 'Charcoal Cyan',
-  background: '#1A1A2E', // charcoal
-  primary: '#00D4FF',    // cyan
-  secondary: '#E0E1DD',  // off-white
-  water: '#0D1B2A',
-  greenSpace: '#0F1A0F',
-  text: '#00D4FF',
-  accent: '#00D4FF',
-  contour: '#E0E1DD',
-  population: '#00D4FF',
+const emberPalette: ColorPalette = {
+  id: 'dark-ember',
+  name: 'Ember',
+  style: 'dark-mode',
+  
+  background: '#0F0A08',
+  text: '#E85A30',
+  border: '#E85A30',
+  
+  roads: {
+    motorway: '#FF6A40',
+    trunk: '#E85A30',
+    primary: '#D04A28',
+    secondary: '#B83A20',
+    tertiary: '#982A18',
+    residential: '#702010',
+    service: '#481008',
+  },
+  
+  water: '#080608',
+  waterLine: '#1A1010',
+  greenSpace: '#0A0A08',
+  landuse: '#120C0A',
+  buildings: '#181210',
+  
+  accent: '#FF6A40',
+};
+
+const auroraPalette: ColorPalette = {
+  id: 'dark-aurora',
+  name: 'Aurora',
+  style: 'dark-mode',
+  
+  background: '#080C10',
+  text: '#40E8B0',
+  border: '#40E8B0',
+  
+  roads: {
+    motorway: '#50F8C0',
+    trunk: '#40E8B0',
+    primary: '#30D8A0',
+    secondary: '#28C090',
+    tertiary: '#20A078',
+    residential: '#188060',
+    service: '#106048',
+  },
+  
+  water: '#04080C',
+  waterLine: '#0C1418',
+  greenSpace: '#081008',
+  landuse: '#0A0E12',
+  buildings: '#0E1418',
+  
+  accent: '#50F8C0',
 };
 
 const mapStyle = {
@@ -151,7 +251,7 @@ const mapStyle = {
       source: 'terrain',
       paint: {
         'hillshade-shadow-color': '#000000',
-        'hillshade-highlight-color': defaultPalette.secondary,
+        'hillshade-highlight-color': defaultPalette.roads.secondary,
         'hillshade-accent-color': '#000000',
         'hillshade-exaggeration': 0.6,
       },
@@ -198,7 +298,7 @@ const mapStyle = {
       source: 'openmaptiles',
       'source-layer': 'building',
       paint: {
-        'fill-color': defaultPalette.buildings || defaultPalette.primary,
+        'fill-color': defaultPalette.buildings || defaultPalette.roads.primary,
         'fill-opacity': 0.3,
       },
     },
@@ -209,7 +309,7 @@ const mapStyle = {
       'source-layer': 'transportation',
       filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary']]],
       paint: {
-        'line-color': defaultPalette.roads?.motorway || defaultPalette.primary,
+        'line-color': defaultPalette.roads.motorway,
         'line-blur': 4,
         'line-opacity': 0.4,
         'line-width': [
@@ -232,7 +332,7 @@ const mapStyle = {
         ['>=', ['zoom'], 13]
       ],
       paint: {
-        'line-color': defaultPalette.roads?.service || defaultPalette.secondary,
+        'line-color': defaultPalette.roads.service,
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
           12, 0.2,
@@ -468,7 +568,15 @@ export const darkModeStyle: PosterStyle = {
   thumbnail: '/thumbnails/dark-mode.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
-  palettes: [defaultPalette, goldPalette, roseNightPalette, neonNoirPalette, classicDarkPalette, charcoalCyanPalette],
+  palettes: [
+    goldPalette, 
+    silverPalette, 
+    rosePalette, 
+    neonPalette, 
+    navyPalette, 
+    emberPalette, 
+    auroraPalette
+  ],
   recommendedFonts: ['Montserrat', 'Poppins', 'Bebas Neue', 'Oswald'],
   layerToggles: layerToggles,
 };

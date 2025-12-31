@@ -5,14 +5,18 @@ import { blueprintStyle } from './blueprint';
 import { vintageStyle } from './vintage';
 import { topographicStyle } from './topographic';
 import { watercolorStyle } from './watercolor';
+import { midnightStyle } from './midnight';
+import { abstractStyle } from './abstract';
 
 export const styles: PosterStyle[] = [
   minimalStyle,
   darkModeStyle,
+  midnightStyle,
   blueprintStyle,
   vintageStyle,
   topographicStyle,
   watercolorStyle,
+  abstractStyle,
 ];
 
 export function getStyleById(id: string): PosterStyle | undefined {

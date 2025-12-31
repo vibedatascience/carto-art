@@ -12,19 +12,15 @@ export interface PosterLocation {
 export interface ColorPalette {
   id: string;
   name: string;
-  background: string;
-  primary: string; // Main streets/features
-  secondary: string; // Minor streets/features
-  accent?: string; // Highlights or borders
-  water: string;
-  greenSpace: string;
-  text: string;
-  grid?: string; // For technical styles
-  contour?: string; // New: Color for topo/contour lines
-  population?: string; // New: Color for population density
+  style: string;                    // Parent style ID
   
-  // New: Granular color overrides for specific styles
-  roads?: {
+  // Core colors
+  background: string;
+  text: string;
+  border: string;
+  
+  // Road hierarchy (7 levels)
+  roads: {
     motorway: string;
     trunk: string;
     primary: string;
@@ -33,11 +29,26 @@ export interface ColorPalette {
     residential: string;
     service: string;
   };
-  landuse?: string;
-  waterLine?: string;
-  parks?: string;
-  buildings?: string;
-  border?: string;
+  
+  // Land features
+  water: string;
+  waterLine: string;                // Rivers, streams
+  greenSpace: string;
+  landuse: string;                  // General land tint
+  buildings: string;
+  
+  // Optional/style-specific
+  accent?: string;
+  contour?: string;
+  contourIndex?: string;
+  grid?: string;
+  hillshade?: string;
+  
+  // Keep for backward compatibility/internal use
+  primary?: string; // Main streets/features
+  secondary?: string; // Minor streets/features
+  population?: string; // Color for population density
+  parks?: string; // Alias for greenSpace
 }
 
 export interface LayerToggle {

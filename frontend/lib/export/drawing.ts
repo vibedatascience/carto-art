@@ -1,6 +1,3 @@
-import type { PosterConfig, ColorPalette } from '@/types/poster';
-import { hexToRgba } from '../utils';
-
 export function drawPin(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -9,51 +6,42 @@ export function drawPin(
   color: string
 ) {
   ctx.save();
-  
-  // Shadow
-  ctx.shadowColor = 'rgba(0,0,0,0.3)';
-  ctx.shadowBlur = size * 0.15;
-  ctx.shadowOffsetY = size * 0.1;
-  
-  const scale = size / 24; 
-  
-  ctx.translate(x, y);
-  ctx.scale(scale, scale);
-  // Move up so (0,0) is at the tip bottom (26 is roughly the bottom of the pin in SVG space)
-  ctx.translate(0, -26); 
-
-  const drawPinPath = (c: CanvasRenderingContext2D) => {
-    c.beginPath();
-    const r = 10;
-    const cy = 10;
-    const tipY = 26;
-    
-    c.moveTo(0, tipY);
-    c.bezierCurveTo(-1, 20, -r, 16, -r, cy);
-    c.arc(0, cy, r, Math.PI, 0); 
-    c.bezierCurveTo(r, 16, 1, 20, 0, tipY);
-    c.closePath();
-  };
-
-  // 1. Draw Border (White)
-  ctx.fillStyle = '#FFFFFF';
-  drawPinPath(ctx);
-  ctx.fill();
-  
-  // 2. Draw Inner Color
+  ctx.strokeStyle = color;
   ctx.fillStyle = color;
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 2.5;
-  ctx.lineJoin = 'round';
-  
-  drawPinPath(ctx);
-  ctx.fill();
-  ctx.stroke();
-  
-  // 3. Draw Center Dot
-  ctx.fillStyle = '#FFFFFF';
+  ctx.lineCap = 'butt';
+
+  const fullLineWidth = Math.max(1, Math.round(size * 0.015));
+  ctx.lineWidth = fullLineWidth;
+  ctx.globalAlpha = 0.55;
+
   ctx.beginPath();
-  ctx.arc(0, 10, 3.5, 0, Math.PI * 2);
+  ctx.moveTo(x, y - size / 2);
+  ctx.lineTo(x, y + size / 2);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(x - size / 2, y);
+  ctx.lineTo(x + size / 2, y);
+  ctx.stroke();
+
+  const baseRadius = size * 0.45;
+  const innerRadius = baseRadius * 0.5;
+  const dotRadius = Math.max(2, baseRadius * 0.25);
+
+  ctx.lineWidth = Math.max(1, Math.round(size * 0.02));
+  ctx.globalAlpha = 0.35;
+  ctx.beginPath();
+  ctx.arc(x, y, baseRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.globalAlpha = 0.55;
+  ctx.beginPath();
+  ctx.arc(x, y, innerRadius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.globalAlpha = 1;
+  ctx.beginPath();
+  ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -154,13 +142,13 @@ export function applyTexture(
 
   const idata = noiseCtx.createImageData(tileSize, tileSize);
   const buffer32 = new Uint32Array(idata.data.buffer);
-  
+
   for (let i = 0; i < buffer32.length; i++) {
     const noise = Math.random() * 255;
     const alpha = (intensity / 100) * 255 * (type === 'canvas' ? 0.25 : 0.15);
     buffer32[i] = (Math.round(alpha) << 24) | (noise << 16) | (noise << 8) | noise;
   }
-  
+
   noiseCtx.putImageData(idata, 0, 0);
   const pattern = ctx.createPattern(noiseCanvas, 'repeat');
   if (pattern) {
@@ -171,4 +159,3 @@ export function applyTexture(
     ctx.restore();
   }
 }
-

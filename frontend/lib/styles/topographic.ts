@@ -6,32 +6,161 @@ import {
   getTerrainRgbTileJsonUrl
 } from '@/lib/styles/tileUrl';
 
-const defaultPalette: ColorPalette = {
+const surveyPalette: ColorPalette = {
   id: 'topo-survey',
   name: 'Survey',
-  background: '#F5F2E8',      // Cream
-  primary: '#5C4830',         // Dark brown
-  secondary: '#B89870',       // residential tan
-  water: '#B8D4E8',           // Clear blue
-  greenSpace: '#D8E4D0',      // Muted green
+  style: 'topographic',
+  
+  background: '#F5F2E8',
   text: '#3C3020',
-  accent: '#5C4830',
-  contour: '#8B7355',
-  population: '#5C4830',
+  border: '#5C4830',
+  
   roads: {
-    motorway: '#5C4830',      // Dark brown
-    trunk: '#6E5840',
-    primary: '#806848',
-    secondary: '#927850',
-    tertiary: '#A48860',
+    motorway: '#4A3020',
+    trunk: '#5C4830',
+    primary: '#6E5840',
+    secondary: '#806848',
+    tertiary: '#9A8060',
     residential: '#B89870',
     service: '#C8A880',
   },
-  landuse: '#EBE8DE',
+  
+  water: '#B8D4E8',
   waterLine: '#7BA3C4',
-  parks: '#D8E4D0',
-  buildings: '#EBE8DE',
-  border: '#5C4830',
+  greenSpace: '#D8E4D0',
+  landuse: '#EBE8DE',
+  buildings: '#E0DCD0',
+  
+  accent: '#5C4830',
+  contour: '#B8A080',
+  contourIndex: '#8B7355',
+  hillshade: '#00000020',
+};
+
+const defaultPalette = surveyPalette;
+
+const usgsPalette: ColorPalette = {
+  id: 'topo-usgs',
+  name: 'USGS Classic',
+  style: 'topographic',
+  
+  background: '#F8F4E8',
+  text: '#2A1810',
+  border: '#4A3020',
+  
+  roads: {
+    motorway: '#3A2010',
+    trunk: '#4A3020',
+    primary: '#5C4030',
+    secondary: '#705040',
+    tertiary: '#886858',
+    residential: '#A08070',
+    service: '#B89888',
+  },
+  
+  water: '#8BC4E8',
+  waterLine: '#4A98C8',
+  greenSpace: '#B8D890',
+  landuse: '#F0ECDC',
+  buildings: '#E8E0D0',
+  
+  accent: '#4A3020',
+  contour: '#B89070',
+  contourIndex: '#8B6040',
+  hillshade: '#00000018',
+};
+
+const nightPalette: ColorPalette = {
+  id: 'topo-night',
+  name: 'Terrain Night',
+  style: 'topographic',
+  
+  background: '#1A1A2E',
+  text: '#B8C5D0',
+  border: '#6BB8C8',
+  
+  roads: {
+    motorway: '#8AD0E0',
+    trunk: '#6BB8C8',
+    primary: '#58A0B0',
+    secondary: '#4A8898',
+    tertiary: '#3A7080',
+    residential: '#2A5868',
+    service: '#1A4050',
+  },
+  
+  water: '#0F2040',
+  waterLine: '#2A4060',
+  greenSpace: '#1A2A1A',
+  landuse: '#1C1C30',
+  buildings: '#202040',
+  
+  accent: '#6BB8C8',
+  contour: '#4A90A4',
+  contourIndex: '#6BB8C8',
+  hillshade: '#FFFFFF10',
+};
+
+const earthPalette: ColorPalette = {
+  id: 'topo-earth',
+  name: 'Earth Tone',
+  style: 'topographic',
+  
+  background: '#F0E8D8',
+  text: '#3A3028',
+  border: '#5A4838',
+  
+  roads: {
+    motorway: '#2A2018',
+    trunk: '#3A3028',
+    primary: '#4A4038',
+    secondary: '#5A5048',
+    tertiary: '#706860',
+    residential: '#908878',
+    service: '#A8A090',
+  },
+  
+  water: '#88B8C8',
+  waterLine: '#5898B0',
+  greenSpace: '#B8C8A0',
+  landuse: '#E8E0D0',
+  buildings: '#DCD4C4',
+  
+  accent: '#5A4838',
+  contour: '#A09078',
+  contourIndex: '#786850',
+  hillshade: '#00000015',
+};
+
+const monoPalette: ColorPalette = {
+  id: 'topo-mono',
+  name: 'Monochrome Relief',
+  style: 'topographic',
+  
+  background: '#F0F0EC',
+  text: '#2A2A28',
+  border: '#4A4A48',
+  
+  roads: {
+    motorway: '#1A1A18',
+    trunk: '#2A2A28',
+    primary: '#3A3A38',
+    secondary: '#4A4A48',
+    tertiary: '#5A5A58',
+    residential: '#7A7A78',
+    service: '#9A9A98',
+  },
+  
+  water: '#C8D0D8',
+  waterLine: '#98A8B0',
+  greenSpace: '#D8DCD0',
+  landuse: '#E8E8E4',
+  buildings: '#DCDCD8',
+  
+  accent: '#4A4A48',
+  contour: '#8A8A88',
+  contourIndex: '#5A5A58',
+  hillshade: '#00000012',
 };
 
 const mapStyle = {
@@ -391,7 +520,13 @@ export const topographicStyle: PosterStyle = {
   thumbnail: '/thumbnails/topographic.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
-  palettes: [defaultPalette],
+  palettes: [
+    surveyPalette, 
+    usgsPalette, 
+    nightPalette, 
+    earthPalette, 
+    monoPalette
+  ],
   recommendedFonts: ['Montserrat', 'Work Sans', 'Public Sans', 'IBM Plex Sans'],
   layerToggles: layerToggles,
 };

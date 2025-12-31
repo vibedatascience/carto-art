@@ -69,12 +69,21 @@ function updateLayerPaint(layer: any, palette: ColorPalette, layers: PosterConfi
   // Hillshade
   if (id === 'hillshade' && type === 'hillshade') {
     const isDark = isColorDark(palette.background);
-    layer.paint = {
-      ...layer.paint,
-      'hillshade-shadow-color': isDark ? '#000000' : palette.secondary,
-      'hillshade-highlight-color': isDark ? palette.secondary : palette.background,
-      'hillshade-accent-color': isDark ? '#000000' : palette.secondary,
-    };
+    if (palette.hillshade) {
+      layer.paint = {
+        ...layer.paint,
+        'hillshade-shadow-color': palette.hillshade,
+        'hillshade-highlight-color': palette.background,
+        'hillshade-accent-color': palette.hillshade,
+      };
+    } else {
+      layer.paint = {
+        ...layer.paint,
+        'hillshade-shadow-color': isDark ? '#000000' : (palette.secondary || palette.text),
+        'hillshade-highlight-color': isDark ? (palette.secondary || palette.text) : palette.background,
+        'hillshade-accent-color': isDark ? '#000000' : (palette.secondary || palette.text),
+      };
+    }
     return;
   }
 
@@ -92,10 +101,14 @@ function updateLayerPaint(layer: any, palette: ColorPalette, layers: PosterConfi
 
   // Contours
   if (id.includes('contour') || id.includes('topo')) {
-    if (type === 'line' && palette.contour) {
+    if (type === 'line') {
+      const color = id.includes('index') 
+        ? (palette.contourIndex || palette.contour || palette.secondary || palette.roads.secondary) 
+        : (palette.contour || palette.secondary || palette.roads.secondary);
+      
       layer.paint = {
         ...layer.paint,
-        'line-color': palette.contour,
+        'line-color': color,
         'line-opacity': layer.paint?.['line-opacity'] ?? 0.4,
       };
     }
@@ -104,18 +117,18 @@ function updateLayerPaint(layer: any, palette: ColorPalette, layers: PosterConfi
   }
 
   // Population
-  if (id.includes('population') && type === 'fill' && palette.population) {
+  if (id.includes('population') && type === 'fill') {
     const existingOpacity = layer.paint?.['fill-opacity'];
     layer.paint = {
       ...layer.paint,
-      'fill-color': palette.population,
+      'fill-color': palette.population || palette.accent || palette.primary || palette.roads.motorway,
       'fill-opacity': Array.isArray(existingOpacity) ? existingOpacity : (existingOpacity ?? 0.6),
     };
     return;
   }
 
-  // Roads
-  if (id.startsWith('road-')) {
+  // Roads & Bridges
+  if (id.startsWith('road-') || id.startsWith('bridge-') || id.startsWith('tunnel-')) {
     updateRoadLayer(layer, palette, labelAdjustment);
     return;
   }
@@ -125,13 +138,13 @@ function updateLayerPaint(layer: any, palette: ColorPalette, layers: PosterConfi
     if (type === 'fill') {
       layer.paint = {
         ...layer.paint,
-        'fill-color': palette.buildings || palette.primary,
+        'fill-color': palette.buildings || palette.primary || palette.text,
         'fill-opacity': layer.paint?.['fill-opacity'] ?? 0.5,
       };
     } else if (type === 'line') {
       layer.paint = {
         ...layer.paint,
-        'line-color': palette.buildings || palette.primary,
+        'line-color': palette.buildings || palette.primary || palette.text,
       };
     }
     return;
@@ -178,21 +191,49 @@ function applyContourDensity(layer: any, density: number | undefined) {
 function updateRoadLayer(layer: any, palette: ColorPalette, labelAdjustment: number) {
   if (layer.type !== 'line') return;
 
-  if (palette.roads) {
-    const roadType = layer.id.split('-')[1];
-    const roadColor = (palette.roads as any)[roadType];
+  // Handle bridge casings - they usually take the background color
+  if (layer.id.includes('bridge') && layer.id.includes('casing')) {
+    layer.paint['line-color'] = palette.background;
+    return;
+  }
+
+  // Handle specific road classes
+  const classes = ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'residential', 'service'];
+  const matchedClass = classes.find(cls => layer.id.includes(cls));
+  
+  if (matchedClass) {
+    const roadColor = (palette.roads as any)[matchedClass];
     if (roadColor) {
       layer.paint['line-color'] = roadColor;
-      layer.paint['line-opacity'] = (layer.paint?.['line-opacity'] ?? 1.0) * labelAdjustment;
+      // Special handling for glow layers - keep their blur and reduce opacity
+      if (layer.id.includes('glow')) {
+        layer.paint['line-opacity'] = (layer.paint?.['line-opacity'] ?? 0.4) * labelAdjustment;
+      } else {
+        layer.paint['line-opacity'] = (layer.paint?.['line-opacity'] ?? 1.0) * labelAdjustment;
+      }
       return;
     }
   }
 
-  // Fallback
+  // Special handling for road-glow if it didn't match a class above
+  if (layer.id.includes('glow')) {
+    layer.paint = {
+      ...layer.paint,
+      'line-color': palette.roads.motorway,
+      'line-opacity': (layer.paint?.['line-opacity'] ?? 0.4) * labelAdjustment,
+    };
+    return;
+  }
+
+  // Fallback for any other line layers starting with 'road-'
   const isSecondary = ['road-street', 'road-residential', 'road-tertiary', 'road-service'].includes(layer.id);
+  const fallbackColor = isSecondary 
+    ? (palette.secondary || palette.roads.secondary) 
+    : (palette.primary || palette.roads.primary);
+
   layer.paint = {
     ...layer.paint,
-    'line-color': isSecondary ? palette.secondary : palette.primary,
+    'line-color': fallbackColor,
     'line-opacity': (layer.paint?.['line-opacity'] ?? (isSecondary ? 0.8 : 1.0)) * labelAdjustment,
   };
 }

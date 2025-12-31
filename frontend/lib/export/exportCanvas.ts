@@ -98,7 +98,8 @@ export async function exportMapToPNG(options: ExportOptions): Promise<Blob> {
       const markerX = marginPx + drawWidth / 2;
       const markerY = marginPx + drawHeight / 2;
       const markerSize = exportResolution.width * 0.045;
-      drawPin(exportCtx, markerX, markerY, markerSize, config.palette.primary);
+      const markerColor = config.palette.accent || config.palette.text;
+      drawPin(exportCtx, markerX, markerY, markerSize, markerColor);
     }
 
     // 6. TEXT OVERLAY

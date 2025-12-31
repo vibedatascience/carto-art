@@ -1,10 +1,9 @@
 'use client';
 
 import { useRef, useCallback, useEffect, useState } from 'react';
-import Map, { type MapRef, Marker } from 'react-map-gl/maplibre';
+import Map, { type MapRef } from 'react-map-gl/maplibre';
 import type { PosterLocation, LayerToggle, PosterConfig } from '@/types/poster';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { MarkerIcon } from './MarkerIcon';
 
 interface MapPreviewProps {
   mapStyle: any;
@@ -158,19 +157,52 @@ export function MapPreview({
         onError={handleError}
         antialias={true}
       >
-        {showMarker && (
-          <Marker
-            longitude={location.center[0]}
-            latitude={location.center[1]}
-            anchor="bottom"
-          >
-            <MarkerIcon 
-              size={42} 
-              color={markerColor}
-              borderColor="white"
+      {showMarker && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+          <div className="relative flex items-center justify-center" aria-hidden>
+            <span
+              className="absolute w-[1px] h-full"
+              style={{
+                backgroundColor: markerColor,
+                opacity: 0.6,
+              }}
             />
-          </Marker>
-        )}
+            <span
+              className="absolute h-[1px] w-full"
+              style={{
+                backgroundColor: markerColor,
+                opacity: 0.6,
+              }}
+            />
+            <span
+              className="absolute rounded-full"
+              style={{
+                width: 44,
+                height: 44,
+                border: `1px solid ${markerColor}`,
+                opacity: 0.35,
+              }}
+            />
+            <span
+              className="absolute rounded-full"
+              style={{
+                width: 22,
+                height: 22,
+                border: `1px solid ${markerColor}`,
+                opacity: 0.55,
+              }}
+            />
+            <span
+              className="absolute rounded-full"
+              style={{
+                width: 10,
+                height: 10,
+                backgroundColor: markerColor,
+              }}
+            />
+          </div>
+        </div>
+      )}
       </Map>
 
       {/* Texture Overlay */}
