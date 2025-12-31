@@ -136,31 +136,62 @@ export async function exportMapToPNG(options: ExportOptions): Promise<Blob> {
 
     // 5. DRAW LOCATION MARKER
     if (config.layers.marker) {
-      // The marker should be at the center of the map viewport
-      // Since the map is drawn at (marginPx, marginPx) with size (drawWidth, drawHeight),
-      // the center is at the center of that rectangle
+      // For a pin, the coordinate (markerX, markerY) corresponds to the TIP of the pin.
+      // The shape grows UPWARDS from there.
       const markerX = marginPx + drawWidth / 2;
       const markerY = marginPx + drawHeight / 2;
       
-      const markerSize = exportResolution.width * 0.02; // 2% of width
+      const markerSize = exportResolution.width * 0.045; // ~4.5% of width
       
       exportCtx.save();
-      exportCtx.fillStyle = config.palette.primary;
-      exportCtx.strokeStyle = config.palette.background;
-      exportCtx.lineWidth = markerSize * 0.2;
       
-      // Draw a simple circle marker
-      exportCtx.beginPath();
-      exportCtx.arc(markerX, markerY, markerSize / 2, 0, Math.PI * 2);
+      // Shadow
+      exportCtx.shadowColor = 'rgba(0,0,0,0.3)';
+      exportCtx.shadowBlur = markerSize * 0.15;
+      exportCtx.shadowOffsetY = markerSize * 0.1;
+      
+      const scale = markerSize / 24; 
+      
+      exportCtx.translate(markerX, markerY);
+      exportCtx.scale(scale, scale);
+      // Move up so (0,0) is at the tip bottom (26 is roughly the bottom of the pin in SVG space)
+      exportCtx.translate(0, -26); 
+
+      // Draw Pin Shape helper
+      const drawPinPath = (ctx: CanvasRenderingContext2D) => {
+        ctx.beginPath();
+        const r = 10;
+        const cy = 10;
+        const tipY = 26;
+        
+        ctx.moveTo(0, tipY);
+        ctx.bezierCurveTo(-1, 20, -r, 16, -r, cy);
+        ctx.arc(0, cy, r, Math.PI, 0); 
+        ctx.bezierCurveTo(r, 16, 1, 20, 0, tipY);
+        ctx.closePath();
+      };
+
+      // 1. Draw Border (White)
+      exportCtx.fillStyle = '#FFFFFF';
+      drawPinPath(exportCtx);
+      exportCtx.fill();
+      
+      // 2. Draw Inner Color
+      exportCtx.fillStyle = config.palette.primary;
+      exportCtx.strokeStyle = '#FFFFFF';
+      exportCtx.lineWidth = 2.5;
+      exportCtx.lineJoin = 'round';
+      
+      drawPinPath(exportCtx);
       exportCtx.fill();
       exportCtx.stroke();
       
-      // Draw a small dot in the middle
-      exportCtx.fillStyle = config.palette.background;
+      // 3. Draw Center Dot
+      exportCtx.fillStyle = '#FFFFFF';
       exportCtx.beginPath();
-      exportCtx.arc(markerX, markerY, markerSize / 6, 0, Math.PI * 2);
+      exportCtx.arc(0, 10, 3.5, 0, Math.PI * 2);
       exportCtx.fill();
-      
+
       exportCtx.restore();
     }
 

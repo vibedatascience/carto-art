@@ -4,6 +4,7 @@ import { useRef, useCallback, useEffect, useState } from 'react';
 import Map, { type MapRef, Marker } from 'react-map-gl/maplibre';
 import type { PosterLocation, LayerToggle, PosterConfig } from '@/types/poster';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { MarkerIcon } from './MarkerIcon';
 
 interface MapPreviewProps {
   mapStyle: any;
@@ -140,17 +141,13 @@ export function MapPreview({
           <Marker
             longitude={location.center[0]}
             latitude={location.center[1]}
-            anchor="center"
+            anchor="bottom"
           >
-            <div 
-              className="w-4 h-4 rounded-full border-2 shadow-sm flex items-center justify-center"
-              style={{ 
-                backgroundColor: markerColor,
-                borderColor: 'white',
-              }}
-            >
-              <div className="w-1 h-1 bg-white rounded-full" />
-            </div>
+            <MarkerIcon 
+              size={42} 
+              color={markerColor}
+              borderColor="white"
+            />
           </Marker>
         )}
       </Map>
