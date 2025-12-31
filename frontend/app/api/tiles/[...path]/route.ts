@@ -29,7 +29,9 @@ export async function GET(
     const remainingPath = pathArray.slice(1).join('/');
     
     // Construct the target URL
-    const searchParams = new URL(request.url).searchParams.toString();
+    const urlObj = new URL(request.url);
+    const origin = urlObj.origin;
+    const searchParams = urlObj.searchParams.toString();
     const tileUrl = `${baseUrl}${remainingPath}${searchParams ? '?' + searchParams : ''}`;
     
     const response = await fetch(tileUrl, {
@@ -71,7 +73,8 @@ export async function GET(
           json.tiles = json.tiles.map((url: string) => {
             const matches = url.match(/https:\/\/tiles\.openfreemap\.org\/(.*)/);
             if (matches && matches[1]) {
-              return `/api/tiles/openfreemap/${matches[1]}`;
+              // Use absolute URLs to avoid MapLibre Request construction errors in workers
+              return `${origin}/api/tiles/openfreemap/${matches[1]}`;
             }
             return url;
           });

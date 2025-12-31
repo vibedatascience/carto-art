@@ -1,6 +1,24 @@
 const PROXY_BASE = '/api/tiles';
 
+function getBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_SERVER_URL) {
+    return process.env.NEXT_PUBLIC_SERVER_URL;
+  }
+
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  
+  // In web workers, self.location is available
+  if (typeof self !== 'undefined' && self.location?.origin) {
+    return self.location.origin;
+  }
+
+  return '';
+}
+
 function joinBaseAndPath(base: string, path: string): string {
+  if (!base) return path;
   // Important: don't use new URL(...).toString() for templates that include "{z}/{x}/{y}",
   // because URL stringification percent-encodes "{" and "}" (breaking MapLibre replacement).
   return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
@@ -11,14 +29,10 @@ function joinBaseAndPath(base: string, path: string): string {
  */
 export function getOpenFreeMapPlanetTileJsonUrl(): string {
   const path = 'openfreemap/planet';
+  const baseUrl = getBaseUrl();
   
-  const envBase = process.env.NEXT_PUBLIC_SERVER_URL;
-  if (envBase) {
-    return joinBaseAndPath(envBase, `${PROXY_BASE}/${path}`);
-  }
-
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return joinBaseAndPath(window.location.origin, `${PROXY_BASE}/${path}`);
+  if (baseUrl) {
+    return joinBaseAndPath(baseUrl, `${PROXY_BASE}/${path}`);
   }
 
   return `${PROXY_BASE}/${path}`;
@@ -33,14 +47,10 @@ export function getContourTileJsonUrl(): string | null {
   if (!maptilerKey) return null;
 
   const path = `maptiler/tiles/contours/tiles.json?key=${maptilerKey}`;
+  const baseUrl = getBaseUrl();
   
-  const envBase = process.env.NEXT_PUBLIC_SERVER_URL;
-  if (envBase) {
-    return joinBaseAndPath(envBase, `${PROXY_BASE}/${path}`);
-  }
-
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return joinBaseAndPath(window.location.origin, `${PROXY_BASE}/${path}`);
+  if (baseUrl) {
+    return joinBaseAndPath(baseUrl, `${PROXY_BASE}/${path}`);
   }
   
   return `${PROXY_BASE}/${path}`;
@@ -54,14 +64,10 @@ export function getTerrainRgbTileJsonUrl(): string | null {
   if (!maptilerKey) return null;
 
   const path = `maptiler/tiles/terrain-rgb-v2/tiles.json?key=${maptilerKey}`;
+  const baseUrl = getBaseUrl();
   
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return joinBaseAndPath(window.location.origin, `${PROXY_BASE}/${path}`);
-  }
-  
-  const envBase = process.env.NEXT_PUBLIC_SERVER_URL;
-  if (envBase) {
-    return joinBaseAndPath(envBase, `${PROXY_BASE}/${path}`);
+  if (baseUrl) {
+    return joinBaseAndPath(baseUrl, `${PROXY_BASE}/${path}`);
   }
 
   return `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${maptilerKey}`;
@@ -72,14 +78,10 @@ export function getTerrainRgbTileJsonUrl(): string | null {
  */
 export function getPopulationTileUrl(): string {
   const path = 'kontur/{z}/{x}/{y}.mvt?indicatorsClass=general';
+  const baseUrl = getBaseUrl();
   
-  const envBase = process.env.NEXT_PUBLIC_SERVER_URL;
-  if (envBase) {
-    return joinBaseAndPath(envBase, `${PROXY_BASE}/${path}`);
-  }
-
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return joinBaseAndPath(window.location.origin, `${PROXY_BASE}/${path}`);
+  if (baseUrl) {
+    return joinBaseAndPath(baseUrl, `${PROXY_BASE}/${path}`);
   }
 
   // Fallback to relative path if no base URL is available
