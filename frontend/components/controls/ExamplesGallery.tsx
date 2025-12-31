@@ -1,9 +1,9 @@
 import React from 'react';
 import { POSTER_EXAMPLES } from '@/lib/config/examples';
 import { PosterConfig } from '@/types/poster';
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Sparkles } from 'lucide-react';
+import { PosterThumbnail } from '../map/PosterThumbnail';
 
 interface ExamplesGalleryProps {
   onSelect: (config: PosterConfig) => void;
@@ -37,13 +37,9 @@ export const ExamplesGallery: React.FC<ExamplesGalleryProps> = ({ onSelect, curr
               )}
             >
               <div className="aspect-[4/3] w-full relative bg-gray-50 dark:bg-gray-900 overflow-hidden">
-                <Image
-                  src={example.thumbnail}
-                  alt={example.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  quality={60}
+                <PosterThumbnail 
+                  config={example.config} 
+                  className="transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
                 <div className="absolute bottom-3 left-3 right-3 text-white">

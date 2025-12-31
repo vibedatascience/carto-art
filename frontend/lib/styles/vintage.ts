@@ -548,7 +548,6 @@ export const vintageStyle: PosterStyle = {
   id: 'vintage',
   name: 'Vintage / Antique',
   description: 'Warm, nostalgic maps with aged parchment and sepia tones',
-  thumbnail: '/thumbnails/vintage.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
   palettes: [

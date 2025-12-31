@@ -511,7 +511,6 @@ export const blueprintStyle: PosterStyle = {
   id: 'blueprint',
   name: 'Blueprint / Technical',
   description: 'Architectural blueprint style with high-contrast lines on deep blue',
-  thumbnail: '/thumbnails/blueprint.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
   palettes: [

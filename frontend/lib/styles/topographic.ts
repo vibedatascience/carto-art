@@ -520,7 +520,6 @@ export const topographicStyle: PosterStyle = {
   id: 'topographic',
   name: 'Topographic / Contour',
   description: 'Terrain-focused maps with detailed elevation contours and hillshading',
-  thumbnail: '/thumbnails/topographic.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
   palettes: [

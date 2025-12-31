@@ -330,7 +330,6 @@ export const midnightStyle: PosterStyle = {
   id: 'midnight',
   name: 'Midnight Noir',
   description: 'Deep navy and ivory technical maps with a high-end feel',
-  thumbnail: '/thumbnails/midnight.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
   palettes: [defaultPalette],

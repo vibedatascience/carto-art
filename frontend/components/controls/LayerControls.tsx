@@ -129,7 +129,7 @@ export function LayerControls({ layers, onLayersChange, availableToggles, palett
                     <ControlLabel className="text-[10px] uppercase text-gray-500">Shading Intensity</ControlLabel>
                     <ControlSlider
                       min="0.0"
-                      max="1.5"
+                      max="1.0"
                       step="0.05"
                       value={layers.hillshadeExaggeration ?? 0.5}
                       onChange={handleHillshadeExaggerationChange}

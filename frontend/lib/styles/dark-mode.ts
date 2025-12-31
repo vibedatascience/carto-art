@@ -568,7 +568,6 @@ export const darkModeStyle: PosterStyle = {
   id: 'dark-mode',
   name: 'Dark Mode / Noir',
   description: 'Dramatic dark maps with luminous street networks',
-  thumbnail: '/thumbnails/dark-mode.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
   palettes: [

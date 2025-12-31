@@ -442,7 +442,6 @@ export const abstractStyle: PosterStyle = {
   id: 'abstract',
   name: 'Abstract / Artistic',
   description: 'Bold, geometric interpretations of urban layouts with vibrant color blocking',
-  thumbnail: '/thumbnails/abstract.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
   palettes: [

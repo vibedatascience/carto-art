@@ -64,25 +64,41 @@ export async function GET(
     const data = await response.arrayBuffer();
     const contentType = response.headers.get('Content-Type') || '';
 
-    // If this is a TileJSON request for OpenFreeMap, override the maxzoom and tiles
-    if (sourceKey === 'openfreemap' && remainingPath === 'planet' && contentType.includes('application/json')) {
+    // If this is a TileJSON request (OpenFreeMap or MapTiler), rewrite tile URLs to go through our proxy
+    const isTileJson = contentType.includes('application/json') && (remainingPath.endsWith('tiles.json') || remainingPath === 'planet');
+
+    if (isTileJson) {
       try {
         const text = new TextDecoder().decode(data);
         const json = JSON.parse(text);
         
-        // Override maxzoom to 15 to unlock high-detail tiles
-        if (json.maxzoom) {
+        // OpenFreeMap specific: Override maxzoom to 15 to unlock high-detail tiles
+        if (sourceKey === 'openfreemap' && json.maxzoom) {
           json.maxzoom = 15;
         }
 
         // Rewrite tile URLs to go through our proxy
         if (json.tiles && Array.isArray(json.tiles)) {
           json.tiles = json.tiles.map((url: string) => {
-            const matches = url.match(/https:\/\/tiles\.openfreemap\.org\/(.*)/);
-            if (matches && matches[1]) {
-              // Use absolute URLs to avoid MapLibre Request construction errors in workers
-              return `${origin}/api/tiles/openfreemap/${matches[1]}`;
+            // Handle OpenFreeMap
+            if (sourceKey === 'openfreemap') {
+              const matches = url.match(/https:\/\/tiles\.openfreemap\.org\/(.*)/);
+              if (matches && matches[1]) {
+                return `${origin}/api/tiles/openfreemap/${matches[1]}`;
+              }
             }
+            
+            // Handle MapTiler
+            if (sourceKey === 'maptiler') {
+              const matches = url.match(/https:\/\/api\.maptiler\.com\/(.*)/);
+              if (matches && matches[1]) {
+                // MapTiler URLs in TileJSON already include the key, but we want to proxy them
+                // We'll strip the key if it's already in our searchParams to avoid duplication, 
+                // but the current proxy setup just appends searchParams from the request.
+                return `${origin}/api/tiles/maptiler/${matches[1]}`;
+              }
+            }
+
             return url;
           });
         }
@@ -92,15 +108,13 @@ export async function GET(
           status: 200,
           headers: {
             'Content-Type': 'application/json',
-            // Avoid caching rewritten TileJSON, which could preserve stale relative tile URLs in production.
             'Cache-Control': 'no-store',
             'Access-Control-Allow-Origin': '*',
-            // Helpful for proxies/CDNs that cache by header variations
             'Vary': 'Host, X-Forwarded-Host, X-Forwarded-Proto',
           },
         });
       } catch (e) {
-        console.error('Error overriding OpenFreeMap TileJSON:', e);
+        console.error(`Error overriding ${sourceKey} TileJSON:`, e);
       }
     }
 

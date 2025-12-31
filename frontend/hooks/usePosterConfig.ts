@@ -81,6 +81,7 @@ export function usePosterConfig() {
   const isInitialized = useRef(false);
 
   const [config, dispatch] = useReducer(posterReducer, DEFAULT_CONFIG);
+  const shouldAutoLocate = useRef(true);
 
   // Initialize from URL on mount
   useEffect(() => {
@@ -90,6 +91,7 @@ export function usePosterConfig() {
     if (stateParam) {
       const decoded = decodeConfig(stateParam);
       if (decoded) {
+        shouldAutoLocate.current = false;
         dispatch({ type: 'SET_CONFIG', payload: { ...DEFAULT_CONFIG, ...decoded } });
       }
     }
@@ -111,17 +113,21 @@ export function usePosterConfig() {
   }, [config, pathname, router, searchParams]);
 
   const setConfig = useCallback((config: PosterConfig) => {
+    shouldAutoLocate.current = false;
     dispatch({ type: 'SET_CONFIG', payload: config });
   }, []);
 
-  const setLocation = useCallback((location: PosterLocation) => {
-    dispatch({ type: 'SET_LOCATION', payload: location });
+  const handleUserLocationFound = useCallback((location: PosterLocation) => {
+    if (shouldAutoLocate.current) {
+      dispatch({ type: 'SET_LOCATION', payload: location });
+    }
   }, []);
 
   // Isolate geolocation side effect
-  useUserLocation(setLocation);
+  useUserLocation(handleUserLocationFound);
 
   const updateLocation = useCallback((location: Partial<PosterLocation>) => {
+    shouldAutoLocate.current = false;
     dispatch({ type: 'UPDATE_LOCATION', payload: location });
   }, []);
 

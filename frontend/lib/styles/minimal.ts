@@ -586,7 +586,6 @@ export const minimalStyle: PosterStyle = {
   id: 'minimal',
   name: 'Minimal Line Art',
   description: 'Clean, monochromatic street maps with minimal detail',
-  thumbnail: '/thumbnails/minimal.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
   palettes: [

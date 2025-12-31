@@ -559,7 +559,6 @@ export const watercolorStyle: PosterStyle = {
   id: 'watercolor',
   name: 'Watercolor / Painted',
   description: 'Soft, organic maps with diffuse edges and a hand-painted feel',
-  thumbnail: '/thumbnails/watercolor.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
   palettes: [

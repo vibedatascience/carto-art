@@ -61,7 +61,6 @@ export interface PosterStyle {
   id: string;
   name: string;
   description: string;
-  thumbnail: string;
   mapStyle: any; // MapLibre style spec (using any for now as the spec is complex)
   defaultPalette: ColorPalette;
   palettes: ColorPalette[];

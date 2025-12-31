@@ -58,7 +58,7 @@ export function getContourTileJsonUrl(): string | null {
   const maptilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY;
   if (!maptilerKey) return null;
 
-  const path = `maptiler/tiles/contours/tiles.json?key=${maptilerKey}`;
+  const path = `maptiler/tiles/contours-v2/tiles.json?key=${maptilerKey}`;
   const baseUrl = getBaseUrl();
   
   if (baseUrl) {
@@ -82,7 +82,7 @@ export function getTerrainRgbTileJsonUrl(): string | null {
     return joinBaseAndPath(baseUrl, `${PROXY_BASE}/${path}`);
   }
 
-  return `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${maptilerKey}`;
+  return `${PROXY_BASE}/${path}`;
 }
 
 /**

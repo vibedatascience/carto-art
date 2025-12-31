@@ -105,8 +105,8 @@ function updateLayerPaint(
   if (id === 'hillshade' && type === 'hillshade') {
     const isDark = isColorDark(palette.background);
     
-    // Add exaggeration from config if available
-    const exaggeration = layers?.hillshadeExaggeration ?? 0.5;
+    // Add exaggeration from config if available, clamped between 0 and 1
+    const exaggeration = Math.min(Math.max(layers?.hillshadeExaggeration ?? 0.5, 0), 1);
     
     if (palette.hillshade) {
       layer.paint = {
