@@ -1,0 +1,68 @@
+'use client';
+
+import { useState, useRef } from 'react';
+import type MapLibreGL from 'maplibre-gl';
+import type { PosterConfig } from '@/types/poster';
+import { exportMapToPNG, downloadBlob } from '@/lib/export/exportCanvas';
+
+export function useMapExport(config: PosterConfig) {
+  const [isExporting, setIsExporting] = useState(false);
+  const mapRef = useRef<MapLibreGL.Map | null>(null);
+
+  const setMapRef = (map: MapLibreGL.Map | null) => {
+    mapRef.current = map;
+  };
+
+  const exportToPNG = async (filenameOrEvent?: string | React.MouseEvent) => {
+    if (!mapRef.current) {
+      throw new Error('Map instance not available');
+    }
+
+    const filename = typeof filenameOrEvent === 'string' ? filenameOrEvent : undefined;
+
+    setIsExporting(true);
+    try {
+      const blob = await exportMapToPNG({
+        map: mapRef.current,
+        config,
+      });
+
+      const exportFilename = filename || `${(config.location.name || 'poster').toString().replace(/[^a-z0-9]/gi, '-').toLowerCase()}-poster.png`;
+      downloadBlob(blob, exportFilename);
+    } catch (error) {
+      console.error('Export failed:', error);
+      throw error;
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const fitToLocation = () => {
+    if (!mapRef.current) return;
+    const { bounds } = config.location;
+    mapRef.current.fitBounds(bounds as [[number, number], [number, number]], {
+      padding: 40,
+      duration: 1000,
+    });
+  };
+
+  const zoomIn = () => {
+    if (!mapRef.current) return;
+    mapRef.current.zoomIn({ duration: 300 });
+  };
+
+  const zoomOut = () => {
+    if (!mapRef.current) return;
+    mapRef.current.zoomOut({ duration: 300 });
+  };
+
+  return {
+    isExporting,
+    exportToPNG,
+    setMapRef,
+    fitToLocation,
+    zoomIn,
+    zoomOut,
+  };
+}
+

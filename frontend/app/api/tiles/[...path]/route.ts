@@ -1,0 +1,77 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+const SOURCES: Record<string, string> = {
+  openfreemap: 'https://tiles.openfreemap.org/',
+  maptiler: 'https://api.maptiler.com/',
+  kontur: 'https://disaster.ninja/active/api/tiles/bivariate/v1/',
+  osm: 'https://tiles.openstreetmap.org/',
+};
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  try {
+    const { path: pathArray } = await params;
+    
+    if (!pathArray || pathArray.length < 2) {
+      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+    }
+
+    const sourceKey = pathArray[0];
+    const baseUrl = SOURCES[sourceKey];
+    
+    if (!baseUrl) {
+      return NextResponse.json({ error: `Unknown source: ${sourceKey}` }, { status: 400 });
+    }
+
+    // Reconstruct the remaining path
+    const remainingPath = pathArray.slice(1).join('/');
+    
+    // Construct the target URL
+    const searchParams = new URL(request.url).searchParams.toString();
+    const tileUrl = `${baseUrl}${remainingPath}${searchParams ? '?' + searchParams : ''}`;
+    
+    const response = await fetch(tileUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'No error body');
+      console.error(`Tile fetch error (${response.status}) for ${tileUrl}:`, errorText);
+      return NextResponse.json(
+        { 
+          error: 'Upstream fetch failed', 
+          status: response.status, 
+          url: tileUrl,
+          details: errorText.slice(0, 500) 
+        }, 
+        { status: response.status }
+      );
+    }
+
+    const data = await response.arrayBuffer();
+
+    return new NextResponse(data, {
+      status: 200,
+      headers: {
+        'Content-Type': response.headers.get('Content-Type') || 'application/x-protobuf',
+        'Cache-Control': 'public, max-age=86400',
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch (error) {
+    console.error('Tile proxy error:', error);
+    return NextResponse.json(
+      { 
+        error: 'Proxy exception', 
+        message: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.stack : String(error)
+      },
+      { status: 500 }
+    );
+  }
+}
+
