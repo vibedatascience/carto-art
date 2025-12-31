@@ -1,148 +1,96 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useReducer, useCallback } from 'react';
 import type { PosterConfig, PosterLocation, PosterStyle, ColorPalette } from '@/types/poster';
-import { getDefaultStyle } from '@/lib/styles';
-import { reverseGeocode, nominatimResultToPosterLocation } from '@/lib/geocoding/nominatim';
+import { DEFAULT_CONFIG } from '@/lib/config/defaults';
+import { useUserLocation } from './useUserLocation';
 
-// Default location: San Francisco
-const defaultLocation: PosterLocation = {
-  name: 'San Francisco',
-  city: 'San Francisco, CA',
-  subtitle: 'California, USA',
-  center: [-122.4194, 37.7749],
-  bounds: [
-    [-122.5179, 37.7038], // SW corner
-    [-122.3774, 37.8324], // NE corner
-  ],
-  zoom: 12,
-};
+type PosterAction =
+  | { type: 'UPDATE_LOCATION'; payload: Partial<PosterLocation> }
+  | { type: 'UPDATE_STYLE'; payload: PosterStyle }
+  | { type: 'UPDATE_PALETTE'; payload: ColorPalette }
+  | { type: 'UPDATE_TYPOGRAPHY'; payload: Partial<PosterConfig['typography']> }
+  | { type: 'UPDATE_FORMAT'; payload: Partial<PosterConfig['format']> }
+  | { type: 'UPDATE_LAYERS'; payload: Partial<PosterConfig['layers']> }
+  | { type: 'SET_LOCATION'; payload: PosterLocation };
 
-const defaultStyle = getDefaultStyle();
-
-const defaultConfig: PosterConfig = {
-  location: defaultLocation,
-  style: defaultStyle,
-  palette: defaultStyle.defaultPalette,
-  typography: {
-    titleFont: defaultStyle.recommendedFonts[0] || 'Inter',
-    titleSize: 5,
-    titleWeight: 800,
-    titleLetterSpacing: 0.08,
-    titleAllCaps: true,
-    subtitleFont: defaultStyle.recommendedFonts[0] || 'Inter',
-    subtitleSize: 2.5,
-    showTitle: true,
-    showSubtitle: true,
-    showCoordinates: true,
-    position: 'bottom',
-    textBackdrop: 'gradient',
-    backdropHeight: 35,
-    backdropAlpha: 1.0,
-    maxWidth: 80, // Default to 80% width
-  },
-  format: {
-    aspectRatio: '2:3',
-    orientation: 'portrait',
-    margin: 5,
-    borderStyle: 'inset',
-    texture: 'none',
-    textureIntensity: 20,
-  },
-  layers: {
-    streets: true,
-    buildings: false,
-    water: true,
-    parks: true,
-    terrain: true,
-    contours: false,
-    population: false,
-    labels: false,
-    labelSize: 1, // Default scale (1.0x)
-    labelMaxWidth: 10, // Default max width (ems/relative)
-    marker: true,
-  },
-};
+function posterReducer(state: PosterConfig, action: PosterAction): PosterConfig {
+  switch (action.type) {
+    case 'UPDATE_LOCATION':
+      return {
+        ...state,
+        location: { ...state.location, ...action.payload },
+      };
+    case 'SET_LOCATION':
+      return {
+        ...state,
+        location: action.payload,
+      };
+    case 'UPDATE_STYLE':
+      return {
+        ...state,
+        style: action.payload,
+        palette: action.payload.defaultPalette,
+        typography: {
+          ...state.typography,
+          titleFont: action.payload.recommendedFonts[0] || state.typography.titleFont,
+          subtitleFont: action.payload.recommendedFonts[0] || state.typography.subtitleFont,
+        },
+      };
+    case 'UPDATE_PALETTE':
+      return { ...state, palette: action.payload };
+    case 'UPDATE_TYPOGRAPHY':
+      return {
+        ...state,
+        typography: { ...state.typography, ...action.payload },
+      };
+    case 'UPDATE_FORMAT':
+      return {
+        ...state,
+        format: { ...state.format, ...action.payload },
+      };
+    case 'UPDATE_LAYERS':
+      return {
+        ...state,
+        layers: { ...state.layers, ...action.payload },
+      };
+    default:
+      return state;
+  }
+}
 
 export function usePosterConfig() {
-  const [config, setConfig] = useState<PosterConfig>(defaultConfig);
+  const [config, dispatch] = useReducer(posterReducer, DEFAULT_CONFIG);
 
-  // Detect user location on load
-  useEffect(() => {
-    if (typeof window === 'undefined' || !navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const result = await reverseGeocode(latitude, longitude);
-          
-          if (result) {
-            const location = nominatimResultToPosterLocation(result);
-            if (location) {
-              setConfig(prev => ({
-                ...prev,
-                location
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('Failed to reverse geocode user location:', error);
-        }
-      },
-      (error) => {
-        // Geolocation denied or failed, just keep default
-        if (error.code !== error.PERMISSION_DENIED) {
-          console.warn('Geolocation error:', error.message);
-        }
-      },
-      { timeout: 10000 }
-    );
+  const setLocation = useCallback((location: PosterLocation) => {
+    dispatch({ type: 'SET_LOCATION', payload: location });
   }, []);
 
+  // Isolate geolocation side effect
+  useUserLocation(setLocation);
+
   const updateLocation = useCallback((location: Partial<PosterLocation>) => {
-    setConfig(prev => ({ 
-      ...prev, 
-      location: { ...prev.location, ...location } 
-    }));
+    dispatch({ type: 'UPDATE_LOCATION', payload: location });
   }, []);
 
   const updateStyle = useCallback((style: PosterStyle) => {
-    setConfig(prev => ({
-      ...prev,
-      style,
-      palette: style.defaultPalette, // Reset to default palette when style changes
-      typography: {
-        ...prev.typography,
-        titleFont: style.recommendedFonts[0] || prev.typography.titleFont,
-        subtitleFont: style.recommendedFonts[0] || prev.typography.subtitleFont,
-      },
-    }));
+    dispatch({ type: 'UPDATE_STYLE', payload: style });
   }, []);
 
   const updatePalette = useCallback((palette: ColorPalette) => {
-    setConfig(prev => ({ ...prev, palette }));
+    dispatch({ type: 'UPDATE_PALETTE', payload: palette });
   }, []);
 
   const updateTypography = useCallback((typography: Partial<PosterConfig['typography']>) => {
-    setConfig(prev => ({
-      ...prev,
-      typography: { ...prev.typography, ...typography },
-    }));
+    dispatch({ type: 'UPDATE_TYPOGRAPHY', payload: typography });
   }, []);
 
   const updateFormat = useCallback((format: Partial<PosterConfig['format']>) => {
-    setConfig(prev => ({
-      ...prev,
-      format: { ...prev.format, ...format },
-    }));
+    dispatch({ type: 'UPDATE_FORMAT', payload: format });
   }, []);
 
   const updateLayers = useCallback((layers: Partial<PosterConfig['layers']>) => {
-    setConfig(prev => ({
-      ...prev,
-      layers: { ...prev.layers, ...layers },
-    }));
+    dispatch({ type: 'UPDATE_LAYERS', payload: layers });
   }, []);
 
   return {
@@ -155,4 +103,3 @@ export function usePosterConfig() {
     updateLayers,
   };
 }
-

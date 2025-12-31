@@ -22,6 +22,12 @@ export function LayerControls({ layers, onLayersChange, availableToggles }: Laye
     onLayersChange({ labelMaxWidth: parseFloat(e.target.value) });
   };
 
+  const handleContourDensityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    console.log('Contour density changed:', value);
+    onLayersChange({ contourDensity: value });
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-2">
@@ -71,6 +77,29 @@ export function LayerControls({ layers, onLayersChange, availableToggles }: Laye
                   onChange={handleLabelMaxWidthChange}
                   className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-blue-600"
                 />
+              </div>
+            )}
+
+            {/* Contour Density Control - only show if this is the contours toggle and it's active */}
+            {item.id === 'contours' && layers.contours && (
+              <div className="px-9 pb-2 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-[10px] text-gray-500 uppercase">Line Interval</span>
+                  <span className="text-[10px] text-gray-500 font-mono">{layers.contourDensity}m</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="250"
+                  step="10"
+                  value={layers.contourDensity}
+                  onChange={handleContourDensityChange}
+                  className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-blue-600"
+                />
+                <div className="flex justify-between text-[8px] text-gray-400 uppercase px-0.5">
+                  <span>Dense</span>
+                  <span>Sparse</span>
+                </div>
               </div>
             )}
           </div>

@@ -1,0 +1,62 @@
+import type { PosterConfig, PosterLocation } from '@/types/poster';
+import { getDefaultStyle } from '@/lib/styles';
+
+export const DEFAULT_LOCATION: PosterLocation = {
+  name: 'San Francisco',
+  city: 'San Francisco, CA',
+  subtitle: 'California, USA',
+  center: [-122.4194, 37.7749],
+  bounds: [
+    [-122.5179, 37.7038], // SW corner
+    [-122.3774, 37.8324], // NE corner
+  ],
+  zoom: 12,
+};
+
+const defaultStyle = getDefaultStyle();
+
+export const DEFAULT_CONFIG: PosterConfig = {
+  location: DEFAULT_LOCATION,
+  style: defaultStyle,
+  palette: defaultStyle.defaultPalette,
+  typography: {
+    titleFont: defaultStyle.recommendedFonts[0] || 'Inter',
+    titleSize: 5,
+    titleWeight: 800,
+    titleLetterSpacing: 0.08,
+    titleAllCaps: true,
+    subtitleFont: defaultStyle.recommendedFonts[0] || 'Inter',
+    subtitleSize: 2.5,
+    showTitle: true,
+    showSubtitle: true,
+    showCoordinates: true,
+    position: 'bottom',
+    textBackdrop: 'gradient',
+    backdropHeight: 35,
+    backdropAlpha: 1.0,
+    maxWidth: 80,
+  },
+  format: {
+    aspectRatio: '2:3',
+    orientation: 'portrait',
+    margin: 5,
+    borderStyle: 'inset',
+    texture: 'none',
+    textureIntensity: 20,
+  },
+  layers: {
+    streets: true,
+    buildings: false,
+    water: true,
+    parks: true,
+    terrain: true,
+    contours: false,
+    contourDensity: 50,
+    population: false,
+    labels: false,
+    labelSize: 1,
+    labelMaxWidth: 10,
+    marker: true,
+  },
+};
+

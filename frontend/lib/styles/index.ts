@@ -2,11 +2,17 @@ import type { PosterStyle } from '@/types/poster';
 import { minimalStyle } from './minimal';
 import { darkModeStyle } from './dark-mode';
 import { blueprintStyle } from './blueprint';
+import { vintageStyle } from './vintage';
+import { topographicStyle } from './topographic';
+import { watercolorStyle } from './watercolor';
 
 export const styles: PosterStyle[] = [
   minimalStyle,
   darkModeStyle,
   blueprintStyle,
+  vintageStyle,
+  topographicStyle,
+  watercolorStyle,
 ];
 
 export function getStyleById(id: string): PosterStyle | undefined {
@@ -16,6 +22,7 @@ export function getStyleById(id: string): PosterStyle | undefined {
 export function getDefaultStyle(): PosterStyle {
   return minimalStyle;
 }
+
 
 
 

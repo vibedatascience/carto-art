@@ -3,26 +3,19 @@
 import { useMemo, useCallback, useState } from 'react';
 import { usePosterConfig } from '@/hooks/usePosterConfig';
 import { useMapExport } from '@/hooks/useMapExport';
-import { Maximize, Plus, Minus, Map as MapIcon, Palette, Type, Layers, Layout } from 'lucide-react';
+import { Maximize, Plus, Minus } from 'lucide-react';
 import { MapPreview } from '@/components/map/MapPreview';
 import { TextOverlay } from '@/components/map/TextOverlay';
-import { LocationSearch } from '@/components/controls/LocationSearch';
-import { StyleSelector } from '@/components/controls/StyleSelector';
-import { ColorControls } from '@/components/controls/ColorControls';
-import { TypographyControls } from '@/components/controls/TypographyControls';
-import { LayerControls } from '@/components/controls/LayerControls';
-import { FormatControls } from '@/components/controls/FormatControls';
 import { ExportButton } from '@/components/controls/ExportButton';
 import { applyPaletteToStyle } from '@/lib/styles/applyPalette';
 import { throttle, cn } from '@/lib/utils';
+import { getNumericRatio, getAspectRatioCSS } from '@/lib/styles/dimensions';
+import { TabNavigation, type Tab } from './TabNavigation';
+import { ControlDrawer } from './ControlDrawer';
 import type MapLibreGL from 'maplibre-gl';
-import type { PosterConfig } from '@/types/poster';
-
-type Tab = 'location' | 'style' | 'text' | 'layers' | 'layout';
 
 export function PosterEditor() {
   const [activeTab, setActiveTab] = useState<Tab>('location');
-  
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { 
@@ -34,19 +27,11 @@ export function PosterEditor() {
     updateFormat,
     updateLayers 
   } = usePosterConfig();
+  
   const { isExporting, exportToPNG, setMapRef, fitToLocation, zoomIn, zoomOut } = useMapExport(config);
 
   const numericRatio = useMemo(() => {
-    const { aspectRatio, orientation } = config.format;
-    const ratios: Record<string, number> = {
-      '2:3': 2/3,
-      '3:4': 3/4,
-      '4:5': 4/5,
-      '1:1': 1,
-      'ISO': 1/Math.sqrt(2)
-    };
-    const base = ratios[aspectRatio];
-    return orientation === 'portrait' ? base : 1/base;
+    return getNumericRatio(config.format.aspectRatio, config.format.orientation);
   }, [config.format.aspectRatio, config.format.orientation]);
 
   // Apply palette colors and visibility to the current map style
@@ -75,48 +60,6 @@ export function PosterEditor() {
     throttledUpdateLocation(center, zoom);
   }, [throttledUpdateLocation]);
 
-  // Helper function to convert aspect ratio string to CSS value
-  function getAspectRatioCSS(aspectRatio: PosterConfig['format']['aspectRatio'], orientation: 'portrait' | 'landscape'): string {
-    const ratios: Record<string, { portrait: string; landscape: string }> = {
-      '2:3': { portrait: '2/3', landscape: '3/2' },
-      '3:4': { portrait: '3/4', landscape: '4/3' },
-      '4:5': { portrait: '4/5', landscape: '5/4' },
-      '1:1': { portrait: '1/1', landscape: '1/1' },
-      'ISO': { portrait: '1/1.414', landscape: '1.414/1' }, // ISO ratio is 1:√2
-    };
-    
-    return ratios[aspectRatio][orientation];
-  }
-
-  const TabButton = ({ id, icon: Icon, label }: { id: Tab, icon: any, label: string }) => (
-    <button
-      onClick={() => {
-        if (activeTab === id && isDrawerOpen) {
-          setIsDrawerOpen(false);
-        } else {
-          setActiveTab(id);
-          setIsDrawerOpen(true);
-        }
-      }}
-      className={cn(
-        "flex-1 md:w-full flex flex-col items-center justify-center py-2 md:py-4 px-2 space-y-1 transition-colors relative",
-        activeTab === id && isDrawerOpen
-          ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20" 
-          : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-      )}
-      title={label}
-    >
-      <Icon className="w-5 h-5 md:w-6 md:h-6" />
-      <span className="text-[10px] font-medium hidden md:block">{label}</span>
-      {activeTab === id && isDrawerOpen && (
-        <>
-          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 dark:bg-blue-400 hidden md:block" />
-          <div className="absolute left-0 right-0 top-0 h-1 bg-blue-600 dark:bg-blue-400 md:hidden" />
-        </>
-      )}
-    </button>
-  );
-
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
       {/* Mobile Header */}
@@ -128,97 +71,25 @@ export function PosterEditor() {
         <ExportButton onExport={exportToPNG} isExporting={isExporting} />
       </div>
 
-      {/* Icon Rail / Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 h-16 md:relative md:h-full md:w-20 bg-white dark:bg-gray-800 border-t md:border-t-0 md:border-r border-gray-200 dark:border-gray-700 flex md:flex-col items-center z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:shadow-sm pb-safe md:pb-0">
-        <div className="hidden md:flex h-16 items-center justify-center w-full border-b border-gray-100 dark:border-gray-700 mb-2">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-lg" />
-        </div>
-        
-        <div className="flex md:flex-col flex-1 md:flex-none md:w-full md:space-y-1">
-          <TabButton id="location" icon={MapIcon} label="Location" />
-          <TabButton id="style" icon={Palette} label="Style" />
-          <TabButton id="text" icon={Type} label="Text" />
-          <TabButton id="layers" icon={Layers} label="Layers" />
-          <TabButton id="layout" icon={Layout} label="Layout" />
-        </div>
-      </nav>
+      <TabNavigation 
+        activeTab={activeTab}
+        isDrawerOpen={isDrawerOpen}
+        onTabChange={setActiveTab}
+        onToggleDrawer={setIsDrawerOpen}
+      />
 
-      {/* Control Panel Drawer */}
-      <aside className={cn(
-        "fixed inset-x-0 bottom-16 md:relative md:bottom-auto md:w-80 bg-white dark:bg-gray-800 border-t md:border-t-0 md:border-r border-gray-200 dark:border-gray-700 overflow-y-auto flex flex-col z-30 transition-all duration-300 ease-in-out shadow-2xl md:shadow-none",
-        isDrawerOpen ? "h-[50vh] md:h-full translate-y-0" : "h-0 md:h-full translate-y-full md:translate-y-0"
-      )}>
-        <div className="p-4 md:p-6 space-y-6">
-          <div className="flex items-center justify-between md:hidden mb-2">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white capitalize">{activeTab}</h2>
-            <button 
-              onClick={() => setIsDrawerOpen(false)}
-              className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-            >
-              <Minus className="w-5 h-5" />
-            </button>
-          </div>
-          {activeTab === 'location' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Location & Map</h2>
-              <LocationSearch
-                onLocationSelect={updateLocation}
-                currentLocation={config.location}
-              />
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-sm text-blue-800 dark:text-blue-200">
-                <p>Tip: Drag the map to fine-tune the position.</p>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'style' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Style & Colors</h2>
-              <StyleSelector
-                selectedStyleId={config.style.id}
-                onStyleSelect={updateStyle}
-              />
-              <ColorControls
-                palette={config.palette}
-                presets={config.style.palettes}
-                onPaletteChange={updatePalette}
-              />
-            </div>
-          )}
-
-          {activeTab === 'text' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Typography</h2>
-              <TypographyControls
-                config={config}
-                onTypographyChange={updateTypography}
-                onLocationChange={updateLocation}
-              />
-            </div>
-          )}
-
-          {activeTab === 'layers' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Map Layers</h2>
-              <LayerControls
-                layers={config.layers}
-                onLayersChange={updateLayers}
-                availableToggles={config.style.layerToggles}
-              />
-            </div>
-          )}
-
-          {activeTab === 'layout' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Format & Layout</h2>
-              <FormatControls
-                format={config.format}
-                onFormatChange={updateFormat}
-              />
-            </div>
-          )}
-        </div>
-      </aside>
+      <ControlDrawer 
+        activeTab={activeTab}
+        isDrawerOpen={isDrawerOpen}
+        setIsDrawerOpen={setIsDrawerOpen}
+        config={config}
+        updateLocation={updateLocation}
+        updateStyle={updateStyle}
+        updatePalette={updatePalette}
+        updateTypography={updateTypography}
+        updateFormat={updateFormat}
+        updateLayers={updateLayers}
+      />
 
       {/* Main Content */}
       <main 
@@ -323,4 +194,5 @@ export function PosterEditor() {
     </div>
   );
 }
+
 

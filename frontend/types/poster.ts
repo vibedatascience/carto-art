@@ -22,6 +22,22 @@ export interface ColorPalette {
   grid?: string; // For technical styles
   contour?: string; // New: Color for topo/contour lines
   population?: string; // New: Color for population density
+  
+  // New: Granular color overrides for specific styles
+  roads?: {
+    motorway: string;
+    trunk: string;
+    primary: string;
+    secondary: string;
+    tertiary: string;
+    residential: string;
+    service: string;
+  };
+  landuse?: string;
+  waterLine?: string;
+  parks?: string;
+  buildings?: string;
+  border?: string;
 }
 
 export interface LayerToggle {
@@ -78,6 +94,7 @@ export interface PosterConfig {
     parks: boolean;
     terrain: boolean;
     contours: boolean;
+    contourDensity: number; // New: control contour line density (interval)
     population: boolean;
     labels: boolean;
     labelSize: number; // New: control map label size

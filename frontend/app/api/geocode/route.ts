@@ -8,9 +8,13 @@ const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 10;
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_SIZE_LIMIT = 1000;
 const cache = new Map<string, { expiresAt: number; payload: unknown }>();
 
-// Nominatim policy: ~1 req/sec. This serializes requests per server instance.
+/**
+ * Rate limiting: Nominatim policy is ~1 request per second.
+ * We use a serialized queue to ensure we don't hit the API too fast from this instance.
+ */
 const MIN_REQUEST_INTERVAL_MS = 1000;
 let lastRequestTime = 0;
 let queue: Promise<unknown> = Promise.resolve();
@@ -33,6 +37,54 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
   return p;
 }
 
+function getFromCache(key: string) {
+  const cached = cache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.payload;
+  }
+  if (cached) cache.delete(key);
+  return null;
+}
+
+function setToCache(key: string, payload: unknown) {
+  if (cache.size >= CACHE_SIZE_LIMIT) {
+    const firstKey = cache.keys().next().value;
+    if (firstKey) cache.delete(firstKey);
+  }
+  cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
+}
+
+async function fetchFromNominatim(endpoint: 'search' | 'reverse', params: URLSearchParams) {
+  const userAgent =
+    process.env.NOMINATIM_USER_AGENT?.trim() ||
+    process.env.VERCEL_URL?.trim()?.replace(/^/, 'carto-art/') ||
+    'carto-art (dev)';
+
+  const fromEmail = process.env.NOMINATIM_FROM_EMAIL?.trim();
+
+  const url = `https://nominatim.openstreetmap.org/${endpoint}?${params.toString()}`;
+
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        'User-Agent': userAgent,
+        ...(fromEmail ? { From: fromEmail } : {}),
+      },
+      cache: 'no-store',
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      return { __error: true, status: resp.status, text };
+    }
+
+    return await resp.json();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown network error';
+    return { __error: true, status: 500, text: msg };
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -40,62 +92,31 @@ export async function GET(request: NextRequest) {
     const lat = url.searchParams.get('lat');
     const lon = url.searchParams.get('lon');
 
-    const userAgent =
-      process.env.NOMINATIM_USER_AGENT?.trim() ||
-      process.env.VERCEL_URL?.trim()?.replace(/^/, 'carto-art/') ||
-      'carto-art (dev)';
-
-    const fromEmail = process.env.NOMINATIM_FROM_EMAIL?.trim();
-
     // Handle Reverse Geocoding
     if (lat && lon) {
-      const cacheKey = `reverse::${lat}::${lon}`;
-      const cached = cache.get(cacheKey);
-      if (cached && cached.expiresAt > Date.now()) {
-        return NextResponse.json(cached.payload, {
-          status: 200,
+      const cacheKey = `rev:${lat}:${lon}`;
+      const cached = getFromCache(cacheKey);
+      if (cached) {
+        return NextResponse.json(cached, {
           headers: { 'Cache-Control': 'public, max-age=300' },
         });
       }
 
-      const payload = await enqueue(async () => {
-        const params = new URLSearchParams({
-          lat,
-          lon,
-          format: 'json',
-          addressdetails: '1',
-          namedetails: '1',
-        });
-
-        try {
-          const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?${params.toString()}`, {
-            headers: {
-              'User-Agent': userAgent,
-              ...(fromEmail ? { From: fromEmail } : {}),
-            },
-            cache: 'no-store',
-          });
-
-          if (!resp.ok) {
-            const text = await resp.text().catch(() => '');
-            return { __error: true, status: resp.status, text };
-          }
-
-          return resp.json();
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : 'Unknown network error';
-          return { __error: true, status: 500, text: msg };
-        }
-      });
+      const payload = await enqueue(() => 
+        fetchFromNominatim('reverse', new URLSearchParams({
+          lat, lon, format: 'json', addressdetails: '1', namedetails: '1'
+        }))
+      );
 
       if (payload && typeof payload === 'object' && (payload as any).__error) {
-        const { status, text } = payload as any;
-        return NextResponse.json({ error: 'Reverse geocoding failed', details: text }, { status });
+        return NextResponse.json(
+          { error: 'Reverse geocoding failed', details: (payload as any).text },
+          { status: (payload as any).status }
+        );
       }
 
-      cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
+      setToCache(cacheKey, payload);
       return NextResponse.json(payload, {
-        status: 200,
         headers: { 'Cache-Control': 'public, max-age=300' },
       });
     }
@@ -104,7 +125,7 @@ export async function GET(request: NextRequest) {
     const q = qRaw.replace(/\s+/g, ' ');
 
     if (!q || q.length < MIN_QUERY_LEN) {
-      return NextResponse.json([], { status: 200, headers: { 'Cache-Control': 'no-store' } });
+      return NextResponse.json([], { headers: { 'Cache-Control': 'no-store' } });
     }
     if (q.length > MAX_QUERY_LEN) {
       return NextResponse.json({ error: 'Query too long' }, { status: 400 });
@@ -115,54 +136,30 @@ export async function GET(request: NextRequest) {
       ? Math.min(Math.max(1, limitParam), MAX_LIMIT)
       : DEFAULT_LIMIT;
 
-    const cacheKey = `${q.toLowerCase()}::${limit}`;
-    const cached = cache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-      return NextResponse.json(cached.payload, {
-        status: 200,
+    const cacheKey = `search:${q.toLowerCase()}:${limit}`;
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, {
         headers: { 'Cache-Control': 'public, max-age=300' },
       });
     }
 
-    const payload = await enqueue(async () => {
-      const params = new URLSearchParams({
-        q,
-        format: 'json',
-        limit: String(limit),
-        addressdetails: '1',
-        namedetails: '1',
-      });
-
-      try {
-        const resp = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
-          headers: {
-            'User-Agent': userAgent,
-            ...(fromEmail ? { From: fromEmail } : {}),
-          },
-          cache: 'no-store',
-        });
-
-        if (!resp.ok) {
-          const text = await resp.text().catch(() => '');
-          return { __error: true, status: resp.status, text };
-        }
-
-        return resp.json();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Unknown network error';
-        return { __error: true, status: 500, text: msg };
-      }
-    });
+    const payload = await enqueue(() =>
+      fetchFromNominatim('search', new URLSearchParams({
+        q, format: 'json', limit: String(limit), addressdetails: '1', namedetails: '1'
+      }))
+    );
 
     if (payload && typeof payload === 'object' && (payload as any).__error) {
-      const { status, text } = payload as any;
-      return NextResponse.json({ error: 'Geocoding failed', details: text }, { status });
+      return NextResponse.json(
+        { error: 'Geocoding failed', details: (payload as any).text },
+        { status: (payload as any).status }
+      );
     }
 
-    cache.set(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
+    setToCache(cacheKey, payload);
 
     return NextResponse.json(payload, {
-      status: 200,
       headers: { 'Cache-Control': 'public, max-age=300' },
     });
   } catch (error) {

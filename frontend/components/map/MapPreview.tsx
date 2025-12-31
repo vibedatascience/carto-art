@@ -77,6 +77,7 @@ export function MapPreview({
       layerToggles.forEach(toggle => {
         const isVisible = layers[toggle.id as keyof PosterConfig['layers']];
         const labelScale = layers.labelSize || 1;
+        const contourDensity = layers.contourDensity || 50;
         
         toggle.layerIds.forEach(layerId => {
           if (!map.getLayer(layerId)) return;
@@ -84,9 +85,29 @@ export function MapPreview({
           // Apply visibility
           map.setLayoutProperty(layerId, 'visibility', isVisible ? 'visible' : 'none');
 
+          // Apply contour density filter if this is a contour layer
+          const layer = map.getLayer(layerId);
+          if (toggle.id === 'contours' && isVisible && (layer as any).sourceLayer === 'contour') {
+            const ele = ['to-number', ['get', 'ele'], 0];
+            const density = Number(contourDensity);
+            console.log(`Applying contour filter to ${layerId} with density: ${density}`);
+            
+            if (layerId.includes('index')) {
+              map.setFilter(layerId, ['all', ['has', 'ele'], ['==', ['%', ele, density * 5], 0]]);
+            } else if (layerId.includes('regular')) {
+              map.setFilter(layerId, [
+                'all',
+                ['has', 'ele'],
+                ['==', ['%', ele, density], 0],
+                ['!=', ['%', ele, density * 5], 0]
+              ]);
+            } else {
+              map.setFilter(layerId, ['all', ['has', 'ele'], ['==', ['%', ele, density], 0]]);
+            }
+          }
+
           // If it's the labels toggle, also apply scale
           if (toggle.id === 'labels' && isVisible) {
-            const layer = map.getLayer(layerId);
             if (layer && layer.type === 'symbol') {
               // We need to get the original text-size to scale it, 
               // but MapLibre doesn't make it easy to get the *unresolved* value easily 

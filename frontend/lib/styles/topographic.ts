@@ -7,106 +7,36 @@ import {
 } from '@/lib/styles/tileUrl';
 
 const defaultPalette: ColorPalette = {
-  id: 'dark-gold',
-  name: 'Gold Standard',
-  background: '#0A0A0F',      // Near black with slight blue
-  primary: '#D4AF37',         // Gold
-  secondary: '#5A4E1A',       // residential gold
-  water: '#06080D',           // Darker than background
-  greenSpace: '#0A0F0A',      // Dark with green hint
-  text: '#D4AF37',
-  accent: '#E8C547',
-  contour: '#7A6820',
-  population: '#D4AF37',
-  roads: {
-    motorway: '#D4AF37',      // Gold
-    trunk: '#C9A432',
-    primary: '#BFA030',
-    secondary: '#9A8228',
-    tertiary: '#7A6820',
-    residential: '#5A4E1A',
-    service: '#3A3410',
-  },
-  landuse: '#0F0F14',
-  waterLine: '#1A1A25',
-  parks: '#0A0F0A',
-  buildings: '#12121A',
-  border: '#D4AF37',
-};
-
-const goldPalette: ColorPalette = {
-  id: 'dark-gold',
-  name: 'Gold Standard',
-  background: '#0A0A0A', // near black
-  primary: '#D4AF37',    // gold
-  secondary: '#8B7355',  // tan-brown
-  water: '#1A1A2E',      // dark blue-black
-  greenSpace: '#0F1A0F', // dark forest
-  text: '#D4AF37',
-  accent: '#E8C547',     // bright gold
+  id: 'topo-survey',
+  name: 'Survey',
+  background: '#F5F2E8',      // Cream
+  primary: '#5C4830',         // Dark brown
+  secondary: '#B89870',       // residential tan
+  water: '#B8D4E8',           // Clear blue
+  greenSpace: '#D8E4D0',      // Muted green
+  text: '#3C3020',
+  accent: '#5C4830',
   contour: '#8B7355',
-  population: '#D4AF37',
-};
-
-const roseNightPalette: ColorPalette = {
-  id: 'dark-rose',
-  name: 'Rose Night',
-  background: '#1A0F14', // deep burgundy-black
-  primary: '#F5E6E8',    // pale pink-white
-  secondary: '#8B7E7E',
-  water: '#1A1A2E',
-  greenSpace: '#0F1A14',
-  text: '#E8B4B8',       // rose gold
-  accent: '#E8B4B8',
-  contour: '#8B7E7E',
-  population: '#E8B4B8',
-};
-
-const neonNoirPalette: ColorPalette = {
-  id: 'dark-neon',
-  name: 'Neon Noir',
-  background: '#0B0B1A', // deep blue-black
-  primary: '#00F5FF',    // cyan
-  secondary: '#FFFFFF',  // white
-  water: '#0F1A2E',      // dark blue
-  greenSpace: '#0A1F0A', // dark green
-  text: '#FFFFFF',
-  accent: '#00F5FF',
-  contour: '#00F5FF',
-  population: '#00F5FF',
-};
-
-const classicDarkPalette: ColorPalette = {
-  id: 'dark-classic',
-  name: 'Deep Navy',
-  background: '#0B1929', // deep navy
-  primary: '#F5F5F5',    // white
-  secondary: '#A0A0A0',
-  water: '#1A1A2E',
-  greenSpace: '#0A1A0A',
-  text: '#F5F5F5',
-  accent: '#F5F5F5',
-  contour: '#A0A0A0',
-  population: '#F5F5F5',
-};
-
-const charcoalCyanPalette: ColorPalette = {
-  id: 'dark-cyan',
-  name: 'Charcoal Cyan',
-  background: '#1A1A2E', // charcoal
-  primary: '#00D4FF',    // cyan
-  secondary: '#E0E1DD',  // off-white
-  water: '#0D1B2A',
-  greenSpace: '#0F1A0F',
-  text: '#00D4FF',
-  accent: '#00D4FF',
-  contour: '#E0E1DD',
-  population: '#00D4FF',
+  population: '#5C4830',
+  roads: {
+    motorway: '#5C4830',      // Dark brown
+    trunk: '#6E5840',
+    primary: '#806848',
+    secondary: '#927850',
+    tertiary: '#A48860',
+    residential: '#B89870',
+    service: '#C8A880',
+  },
+  landuse: '#EBE8DE',
+  waterLine: '#7BA3C4',
+  parks: '#D8E4D0',
+  buildings: '#EBE8DE',
+  border: '#5C4830',
 };
 
 const mapStyle = {
   version: 8,
-  name: 'Dark Mode / Noir',
+  name: 'Topographic / Contour',
   metadata: {
     'mapbox:autocomposite': false,
   },
@@ -120,7 +50,7 @@ const mapStyle = {
     contours: {
       type: 'vector',
       url: getContourTileJsonUrl() || '',
-      minzoom: 0,
+      minzoom: 9,
       maxzoom: 14,
     },
     population: {
@@ -150,10 +80,10 @@ const mapStyle = {
       type: 'hillshade',
       source: 'terrain',
       paint: {
-        'hillshade-shadow-color': '#000000',
-        'hillshade-highlight-color': defaultPalette.secondary,
-        'hillshade-accent-color': '#000000',
-        'hillshade-exaggeration': 0.6,
+        'hillshade-shadow-color': '#5C4830',
+        'hillshade-highlight-color': '#FFFFFF',
+        'hillshade-accent-color': '#5C4830',
+        'hillshade-exaggeration': 0.15,
       },
     },
     {
@@ -164,6 +94,7 @@ const mapStyle = {
       paint: {
         'fill-color': defaultPalette.water,
         'fill-opacity': 0.8,
+        'fill-outline-color': defaultPalette.waterLine || defaultPalette.water,
       },
     },
     {
@@ -173,12 +104,12 @@ const mapStyle = {
       'source-layer': 'waterway',
       paint: {
         'line-color': defaultPalette.waterLine || defaultPalette.water,
-        'line-opacity': 0.5,
+        'line-opacity': 0.9,
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          10, 0.8,
-          12, 1.2,
-          14, 1.8,
+          10, 1.0,
+          12, 1.5,
+          14, 2.0,
         ],
       },
     },
@@ -193,33 +124,46 @@ const mapStyle = {
       },
     },
     {
-      id: 'buildings',
-      type: 'fill',
-      source: 'openmaptiles',
-      'source-layer': 'building',
+      id: 'contours-regular',
+      type: 'line',
+      source: 'contours',
+      'source-layer': 'contour',
+      filter: ['!=', ['%', ['get', 'ele'], 50], 0],
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
       paint: {
-        'fill-color': defaultPalette.buildings || defaultPalette.primary,
-        'fill-opacity': 0.3,
+        'line-color': '#B8A080',
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 0.3,
+          12, 0.5,
+          14, 0.7,
+        ],
+        'line-opacity': 0.4,
       },
     },
     {
-      id: 'road-glow',
+      id: 'contours-index',
       type: 'line',
-      source: 'openmaptiles',
-      'source-layer': 'transportation',
-      filter: ['in', ['get', 'class'], ['literal', ['motorway', 'trunk', 'primary']]],
+      source: 'contours',
+      'source-layer': 'contour',
+      // Every 5th line (assuming 10m intervals, so every 50m)
+      filter: ['==', ['%', ['get', 'ele'], 50], 0],
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round',
+      },
       paint: {
-        'line-color': defaultPalette.roads?.motorway || defaultPalette.primary,
-        'line-blur': 4,
-        'line-opacity': 0.4,
+        'line-color': '#8B7355',
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          10, 2.5 * 2.5,
-          11, 3.0 * 2.5,
-          12, 3.5 * 2.5,
-          13, 4.0 * 2.5,
-          14, 4.5 * 2.5
+          10, 0.6,
+          12, 0.9,
+          14, 1.2,
         ],
+        'line-opacity': 0.6,
       },
     },
     {
@@ -255,9 +199,9 @@ const mapStyle = {
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
           11, 0.2,
-          12, 0.5,
-          13, 0.8,
-          14, 1.1
+          12, 0.4,
+          13, 0.6,
+          14, 0.9
         ],
       },
     },
@@ -271,11 +215,11 @@ const mapStyle = {
         'line-color': defaultPalette.roads?.tertiary || defaultPalette.secondary,
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          10, 0.4,
-          11, 0.6,
-          12, 0.9,
-          13, 1.2,
-          14, 1.5
+          10, 0.3,
+          11, 0.4,
+          12, 0.6,
+          13, 0.9,
+          14, 1.2
         ],
       },
     },
@@ -289,11 +233,11 @@ const mapStyle = {
         'line-color': defaultPalette.roads?.secondary || defaultPalette.secondary,
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          10, 0.8,
-          11, 1.1,
-          12, 1.4,
-          13, 1.8,
-          14, 2.2
+          10, 0.5,
+          11, 0.7,
+          12, 1.0,
+          13, 1.3,
+          14, 1.6
         ],
       },
     },
@@ -307,11 +251,11 @@ const mapStyle = {
         'line-color': defaultPalette.roads?.primary || defaultPalette.primary,
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          10, 1.4,
-          11, 1.8,
-          12, 2.2,
-          13, 2.6,
-          14, 3.0
+          10, 0.8,
+          11, 1.1,
+          12, 1.4,
+          13, 1.7,
+          14, 2.0
         ],
       },
     },
@@ -325,11 +269,11 @@ const mapStyle = {
         'line-color': defaultPalette.roads?.trunk || defaultPalette.primary,
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          10, 2.0,
-          11, 2.5,
-          12, 3.0,
-          13, 3.5,
-          14, 4.0
+          10, 1.2,
+          11, 1.5,
+          12, 1.8,
+          13, 2.2,
+          14, 2.6
         ],
       },
     },
@@ -343,11 +287,11 @@ const mapStyle = {
         'line-color': defaultPalette.roads?.motorway || defaultPalette.primary,
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          10, 2.5,
-          11, 3.0,
-          12, 3.5,
-          13, 4.0,
-          14, 4.5
+          10, 1.5,
+          11, 1.8,
+          12, 2.2,
+          13, 2.6,
+          14, 3.0
         ],
       },
     },
@@ -362,27 +306,12 @@ const mapStyle = {
           'interpolate',
           ['linear'],
           ['get', 'population'],
-          0, 0,      // 0 population = 0 opacity (fixes ocean hexes)
-          1, 0.1,    // 10% opacity at 1 person
-          100, 0.25,
-          1000, 0.45,
-          10000, 0.7
+          0, 0,
+          1, 0.05,
+          100, 0.15,
+          1000, 0.3,
+          10000, 0.5
         ],
-      },
-    },
-    {
-      id: 'contours',
-      type: 'line',
-      source: 'contours',
-      'source-layer': 'contour',
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
-      },
-      paint: {
-        'line-color': defaultPalette.contour,
-        'line-width': 0.5,
-        'line-opacity': 0.4,
       },
     },
     {
@@ -396,7 +325,7 @@ const mapStyle = {
         'text-size': {
           stops: [
             [4, 10],
-            [12, 14],
+            [12, 16],
           ],
         },
       },
@@ -414,7 +343,6 @@ const layerToggles: LayerToggle[] = [
     id: 'streets',
     name: 'Streets',
     layerIds: [
-      'road-glow',
       'road-service', 
       'road-residential', 
       'road-tertiary', 
@@ -423,11 +351,6 @@ const layerToggles: LayerToggle[] = [
       'road-trunk', 
       'road-motorway'
     ],
-  },
-  {
-    id: 'buildings',
-    name: 'Buildings',
-    layerIds: ['buildings'],
   },
   {
     id: 'water',
@@ -447,7 +370,7 @@ const layerToggles: LayerToggle[] = [
   {
     id: 'contours',
     name: 'Topography (Contours)',
-    layerIds: ['contours'],
+    layerIds: ['contours-regular', 'contours-index'],
   },
   {
     id: 'population',
@@ -461,15 +384,15 @@ const layerToggles: LayerToggle[] = [
   },
 ];
 
-export const darkModeStyle: PosterStyle = {
-  id: 'dark-mode',
-  name: 'Dark Mode / Noir',
-  description: 'Dramatic dark maps with luminous street networks',
-  thumbnail: '/thumbnails/dark-mode.jpg',
+export const topographicStyle: PosterStyle = {
+  id: 'topographic',
+  name: 'Topographic / Contour',
+  description: 'Terrain-focused maps with detailed elevation contours and hillshading',
+  thumbnail: '/thumbnails/topographic.jpg',
   mapStyle: mapStyle,
   defaultPalette: defaultPalette,
-  palettes: [defaultPalette, goldPalette, roseNightPalette, neonNoirPalette, classicDarkPalette, charcoalCyanPalette],
-  recommendedFonts: ['Montserrat', 'Poppins', 'Bebas Neue', 'Oswald'],
+  palettes: [defaultPalette],
+  recommendedFonts: ['Montserrat', 'Work Sans', 'Public Sans', 'IBM Plex Sans'],
   layerToggles: layerToggles,
 };
 

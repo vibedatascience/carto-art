@@ -9,16 +9,30 @@ import {
 const defaultPalette: ColorPalette = {
   id: 'blueprint-classic',
   name: 'Classic Blueprint',
-  background: '#0A2647', // Prussian blue
-  primary: '#FFFFFF',    // white
-  secondary: '#E8F1F5',  // blue-white
-  water: '#082540',      // darker blue
-  greenSpace: '#0A3040', // blue-green hint
+  background: '#0A2647',      // Prussian blue
+  primary: '#FFFFFF',         // Pure white
+  secondary: '#88A8C8',       // residential blue
+  water: '#072035',           // Darker blue
+  greenSpace: '#0A3040',      // Blue-green hint
   text: '#E8F1F5',
-  accent: '#FFFFFF',
-  grid: '#1A3A5C',       // lighter blue grid
+  accent: '#E8F1F5',
+  grid: '#1A3A5C',            // Subtle grid overlay
   contour: '#E8F1F5',
   population: '#FFFFFF',
+  roads: {
+    motorway: '#FFFFFF',      // Pure white for max contrast
+    trunk: '#F0F4F8',
+    primary: '#E0E8F0',
+    secondary: '#C8D8E8',
+    tertiary: '#A8C0D8',
+    residential: '#88A8C8',
+    service: '#6890B0',
+  },
+  landuse: '#0D2D52',
+  waterLine: '#1A4060',
+  parks: '#0A3040',
+  buildings: '#0F3355',
+  border: '#E8F1F5',
 };
 
 const architectPalette: ColorPalette = {
@@ -125,17 +139,8 @@ const mapStyle = {
       'source-layer': 'water',
       paint: {
         'fill-color': defaultPalette.water,
-      },
-    },
-    {
-      id: 'buildings',
-      type: 'line',
-      source: 'openmaptiles',
-      'source-layer': 'building',
-      paint: {
-        'line-color': defaultPalette.primary,
-        'line-width': 0.8,
-        'line-opacity': 0.8,
+        'fill-opacity': 0.7,
+        'fill-outline-color': defaultPalette.waterLine || defaultPalette.water,
       },
     },
     {
@@ -145,6 +150,175 @@ const mapStyle = {
       'source-layer': 'park',
       paint: {
         'fill-color': defaultPalette.greenSpace,
+        'fill-opacity': 0.25,
+      },
+    },
+    {
+      id: 'buildings',
+      type: 'fill',
+      source: 'openmaptiles',
+      'source-layer': 'building',
+      paint: {
+        'fill-color': defaultPalette.buildings || defaultPalette.primary,
+        'fill-opacity': 0.2,
+        'fill-outline-color': '#4A6A8A',
+      },
+    },
+    {
+      id: 'road-service',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'transportation',
+      filter: ['all', 
+        ['in', ['get', 'class'], ['literal', ['service', 'path', 'track']]],
+        ['>=', ['zoom'], 13]
+      ],
+      layout: {
+        'line-cap': 'square',
+        'line-join': 'miter',
+      },
+      paint: {
+        'line-color': defaultPalette.roads?.service || defaultPalette.secondary,
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          12, 0.2,
+          13, 0.4,
+          14, 0.6
+        ],
+      },
+    },
+    {
+      id: 'road-residential',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'transportation',
+      filter: ['all',
+        ['in', ['get', 'class'], ['literal', ['residential', 'living_street']]],
+        ['>=', ['zoom'], 11]
+      ],
+      layout: {
+        'line-cap': 'square',
+        'line-join': 'miter',
+      },
+      paint: {
+        'line-color': defaultPalette.roads?.residential || defaultPalette.secondary,
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          11, 0.2,
+          12, 0.4,
+          13, 0.7,
+          14, 1.0
+        ],
+      },
+    },
+    {
+      id: 'road-tertiary',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'transportation',
+      filter: ['==', ['get', 'class'], 'tertiary'],
+      layout: {
+        'line-cap': 'square',
+        'line-join': 'miter',
+      },
+      paint: {
+        'line-color': defaultPalette.roads?.tertiary || defaultPalette.secondary,
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 0.3,
+          11, 0.5,
+          12, 0.7,
+          13, 1.0,
+          14, 1.3
+        ],
+      },
+    },
+    {
+      id: 'road-secondary',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'transportation',
+      filter: ['==', ['get', 'class'], 'secondary'],
+      layout: {
+        'line-cap': 'square',
+        'line-join': 'miter',
+      },
+      paint: {
+        'line-color': defaultPalette.roads?.secondary || defaultPalette.secondary,
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 0.6,
+          11, 0.8,
+          12, 1.1,
+          13, 1.4,
+          14, 1.8
+        ],
+      },
+    },
+    {
+      id: 'road-primary',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'transportation',
+      filter: ['==', ['get', 'class'], 'primary'],
+      layout: {
+        'line-cap': 'square',
+        'line-join': 'miter',
+      },
+      paint: {
+        'line-color': defaultPalette.roads?.primary || defaultPalette.primary,
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 1.0,
+          11, 1.3,
+          12, 1.6,
+          13, 2.0,
+          14, 2.4
+        ],
+      },
+    },
+    {
+      id: 'road-trunk',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'transportation',
+      filter: ['==', ['get', 'class'], 'trunk'],
+      layout: {
+        'line-cap': 'square',
+        'line-join': 'miter',
+      },
+      paint: {
+        'line-color': defaultPalette.roads?.trunk || defaultPalette.primary,
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 1.4,
+          11, 1.8,
+          12, 2.2,
+          13, 2.6,
+          14, 3.0
+        ],
+      },
+    },
+    {
+      id: 'road-motorway',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'transportation',
+      filter: ['==', ['get', 'class'], 'motorway'],
+      layout: {
+        'line-cap': 'square',
+        'line-join': 'miter',
+      },
+      paint: {
+        'line-color': defaultPalette.roads?.motorway || defaultPalette.primary,
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 1.8,
+          11, 2.2,
+          12, 2.6,
+          13, 3.0,
+          14, 3.4
+        ],
       },
     },
     {
@@ -158,7 +332,7 @@ const mapStyle = {
           'interpolate',
           ['linear'],
           ['get', 'population'],
-          0, 0,      // 0 population = 0 opacity (fixes ocean hexes)
+          0, 0,
           1, 0.1,
           100, 0.25,
           1000, 0.45,
@@ -172,67 +346,13 @@ const mapStyle = {
       source: 'contours',
       'source-layer': 'contour',
       layout: {
-        'line-join': 'round',
-        'line-cap': 'round',
+        'line-join': 'miter',
+        'line-cap': 'square',
       },
       paint: {
         'line-color': defaultPalette.contour,
         'line-width': 0.5,
         'line-opacity': 0.4,
-      },
-    },
-    {
-      id: 'road-street',
-      type: 'line',
-      source: 'openmaptiles',
-      'source-layer': 'transportation',
-      filter: ['in', ['get', 'class'], ['literal', ['street', 'path']]],
-      paint: {
-        'line-color': defaultPalette.secondary,
-        'line-width': {
-          base: 1.2,
-          stops: [
-            [12, 0.5],
-            [20, 2],
-          ],
-        },
-        'line-opacity': 0.7,
-      },
-    },
-    {
-      id: 'road-primary',
-      type: 'line',
-      source: 'openmaptiles',
-      'source-layer': 'transportation',
-      filter: ['in', ['get', 'class'], ['literal', ['primary', 'secondary', 'tertiary']]],
-      paint: {
-        'line-color': defaultPalette.primary,
-        'line-width': {
-          base: 1.2,
-          stops: [
-            [10, 1],
-            [20, 4],
-          ],
-        },
-        'line-opacity': 0.9,
-      },
-    },
-    {
-      id: 'road-motorway',
-      type: 'line',
-      source: 'openmaptiles',
-      'source-layer': 'transportation',
-      filter: ['==', ['get', 'class'], 'motorway'],
-      paint: {
-        'line-color': defaultPalette.primary,
-        'line-width': {
-          base: 1.2,
-          stops: [
-            [8, 1.5],
-            [20, 6],
-          ],
-        },
-        'line-opacity': 1,
       },
     },
     {
@@ -263,7 +383,15 @@ const layerToggles: LayerToggle[] = [
   {
     id: 'streets',
     name: 'Streets',
-    layerIds: ['road-street', 'road-primary', 'road-motorway'],
+    layerIds: [
+      'road-service', 
+      'road-residential', 
+      'road-tertiary', 
+      'road-secondary', 
+      'road-primary', 
+      'road-trunk', 
+      'road-motorway'
+    ],
   },
   {
     id: 'buildings',
