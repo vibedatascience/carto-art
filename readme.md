@@ -6,6 +6,14 @@ We're building a web application that generates beautifully stylized map posters
 
 Think of it as a cartographic art tool - turning real OpenStreetMap/terrain data into gallery-worthy prints.
 
+## Gallery
+
+| ![Chesapeake Bay](examples/chesapeke-poster.png) | ![Denver](examples/denver-poster.png) |
+|:---:|:---:|
+| **Chesapeake Bay** | **Denver** |
+| ![DMV](examples/dmv-poster.png) | ![Salt Lake City](examples/salt-lake-city-poster.png) |
+| **DMV Area** | **Salt Lake City** |
+
 ---
 
 ## Core User Flow

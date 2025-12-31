@@ -87,7 +87,7 @@ export function MapPreview({
           // Apply contour density filter if this is a contour layer
           const layer = map.getLayer(layerId);
           if (toggle.id === 'contours' && isVisible && (layer as any).sourceLayer === 'contour') {
-            const ele = ['to-number', ['get', 'ele'], 0];
+            const ele: any = ['to-number', ['get', 'ele'], 0];
             const density = Number(contourDensity);
             console.log(`Applying contour filter to ${layerId} with density: ${density}`);
             
