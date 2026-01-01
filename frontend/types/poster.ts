@@ -123,6 +123,14 @@ export interface PosterConfig {
     markerType?: 'pin' | 'crosshair' | 'dot' | 'ring' | 'heart' | 'home';
     markerColor?: string;
     roadWeight: number; // New: control road line thickness
+    // 3D Buildings
+    buildings3D?: boolean; // Enable 3D extruded buildings
+    buildings3DHeight?: number; // Height multiplier (0.5-3)
+  };
+  // Camera settings for 3D view
+  camera?: {
+    pitch: number; // Tilt angle 0-85 degrees
+    bearing: number; // Rotation -180 to 180 degrees
   };
 }
 

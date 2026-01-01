@@ -335,7 +335,45 @@ function updateLayerPaint(
     return;
   }
 
-  // Buildings
+  // Buildings (2D flat)
+  if (id === 'buildings' && type === 'fill') {
+    layer.paint = {
+      ...layer.paint,
+      'fill-color': palette.buildings || palette.primary || palette.text,
+      'fill-opacity': layer.paint?.['fill-opacity'] ?? 0.5,
+    };
+    // Hide 2D buildings when 3D is enabled
+    if (layers?.buildings3D) {
+      if (!layer.layout) layer.layout = {};
+      layer.layout.visibility = 'none';
+    }
+    return;
+  }
+
+  // Buildings 3D (extruded)
+  if (id === 'buildings-3d' && type === 'fill-extrusion') {
+    const buildingColor = palette.buildings || palette.primary || palette.text;
+    const heightMultiplier = layers?.buildings3DHeight ?? 1.0;
+
+    layer.paint = {
+      ...layer.paint,
+      'fill-extrusion-color': buildingColor,
+      'fill-extrusion-height': [
+        '*',
+        ['coalesce', ['get', 'render_height'], 10],
+        heightMultiplier
+      ],
+      'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+      'fill-extrusion-opacity': 0.85,
+    };
+
+    // Toggle visibility based on buildings3D setting
+    if (!layer.layout) layer.layout = {};
+    layer.layout.visibility = layers?.buildings3D ? 'visible' : 'none';
+    return;
+  }
+
+  // Other building layers (outlines, etc)
   if (id.includes('building')) {
     if (type === 'fill') {
       layer.paint = {

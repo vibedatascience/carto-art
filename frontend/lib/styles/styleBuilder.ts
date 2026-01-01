@@ -121,8 +121,8 @@ export function buildStyle(options: StyleBuildOptions): PosterStyle {
   // 4. Bathymetry layers (after water)
   layers.push(...bathymetryLayers);
 
-  // 5. Parks and buildings
-  layers.push(...baseLayers.filter(l => l.id === 'park' || l.id === 'buildings'));
+  // 5. Parks and buildings (including 3D buildings layer)
+  layers.push(...baseLayers.filter(l => l.id === 'park' || l.id === 'buildings' || l.id === 'buildings-3d'));
 
   // 6. Roads
   const roadLayers = createRoadLayers(defaultPalette, roadOptions);

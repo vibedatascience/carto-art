@@ -68,6 +68,12 @@ export const DEFAULT_CONFIG: PosterConfig = {
     markerType: 'crosshair',
     markerColor: undefined, // Default to palette primary
     roadWeight: 1.0,
+    buildings3D: false, // 3D extruded buildings
+    buildings3DHeight: 1.0, // Height multiplier
+  },
+  camera: {
+    pitch: 0, // Tilt angle 0-85 degrees
+    bearing: 0, // Rotation -180 to 180 degrees
   },
 };
 

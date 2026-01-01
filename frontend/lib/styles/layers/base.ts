@@ -91,6 +91,27 @@ export function createBaseLayers(
         'fill-opacity': buildingsOpacity,
       },
     },
+    // 3D extruded buildings layer (hidden by default, enabled via layers.buildings3D)
+    {
+      id: 'buildings-3d',
+      type: 'fill-extrusion',
+      source: 'openmaptiles',
+      'source-layer': 'building',
+      minzoom: 14,
+      layout: {
+        visibility: 'none', // Hidden by default
+      },
+      paint: {
+        'fill-extrusion-color': palette.buildings || palette.primary || palette.secondary || palette.text,
+        'fill-extrusion-height': [
+          'interpolate', ['linear'], ['zoom'],
+          14, 0,
+          15, ['coalesce', ['get', 'render_height'], 10]
+        ],
+        'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+        'fill-extrusion-opacity': 0.85,
+      },
+    },
     {
       id: 'population-density',
       type: 'fill',

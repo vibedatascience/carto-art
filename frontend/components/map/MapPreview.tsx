@@ -20,17 +20,20 @@ interface MapPreviewProps {
   onMove?: (center: [number, number], zoom: number) => void;
   layers?: PosterConfig['layers'];
   layerToggles?: LayerToggle[];
+  camera?: PosterConfig['camera']; // Pitch and bearing for 3D view
 }
 
-export function MapPreview({ 
-  mapStyle, 
-  location, 
+export function MapPreview({
+  mapStyle,
+  location,
   format,
-  showMarker = true, 
-  markerColor, 
-  onMapLoad, 
-  onMove 
-  , layers, layerToggles
+  showMarker = true,
+  markerColor,
+  onMapLoad,
+  onMove,
+  layers,
+  layerToggles,
+  camera
 }: MapPreviewProps) {
   const mapRef = useRef<MapRef>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,16 +49,28 @@ export function MapPreview({
     longitude: location.center[0],
     latitude: location.center[1],
     zoom: location.zoom,
+    pitch: camera?.pitch ?? 0,
+    bearing: camera?.bearing ?? 0,
   });
 
   // Sync with external location changes (e.g. search, button clicks)
   useEffect(() => {
-    setViewState({
+    setViewState(prev => ({
+      ...prev,
       longitude: location.center[0],
       latitude: location.center[1],
       zoom: location.zoom,
-    });
+    }));
   }, [location.center, location.zoom]);
+
+  // Sync with camera changes (pitch/bearing for 3D view)
+  useEffect(() => {
+    setViewState(prev => ({
+      ...prev,
+      pitch: camera?.pitch ?? 0,
+      bearing: camera?.bearing ?? 0,
+    }));
+  }, [camera?.pitch, camera?.bearing]);
 
 
   const handleLoad = useCallback(() => {
@@ -204,6 +219,9 @@ export function MapPreview({
         pixelRatio={MAP.PIXEL_RATIO}
         maxZoom={MAP.MAX_ZOOM}
         minZoom={MAP.MIN_ZOOM}
+        maxPitch={85}
+        pitchWithRotate={true}
+        dragRotate={true}
       >
       {showMarker && (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
