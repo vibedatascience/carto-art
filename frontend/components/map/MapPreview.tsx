@@ -103,16 +103,33 @@ export function MapPreview({
       });
 
       // Debug logging for contour source and layers
+      let contourTilesLoading = 0;
+      let contourTilesLoaded = 0;
+
       map.on('sourcedataloading', (e: any) => {
-        if (e.sourceId === 'contours') {
-          console.log('[DEBUG MAP] Contour source loading:', {
-            sourceId: e.sourceId,
-            isSourceLoaded: e.isSourceLoaded,
-            tile: e.tile ? {
-              tileID: e.tile.tileID,
-              state: e.tile.state
-            } : null
-          });
+        if (e.sourceId === 'contours' && e.tile) {
+          contourTilesLoading++;
+          const tileZoom = e.tile.tileID?.canonical?.z;
+          const mapZoom = map.getZoom();
+          if (contourTilesLoading <= 5) { // Only log first few to avoid spam
+            console.log('[DEBUG MAP] Contour tile loading:', {
+              sourceId: e.sourceId,
+              tileZoom,
+              mapZoom: mapZoom.toFixed(2),
+              fetchingHigher: tileZoom && tileZoom > Math.floor(mapZoom),
+              tilesInQueue: contourTilesLoading - contourTilesLoaded,
+              tileID: `${e.tile.tileID?.canonical?.z}/${e.tile.tileID?.canonical?.x}/${e.tile.tileID?.canonical?.y}`
+            });
+          }
+        }
+      });
+
+      map.on('sourcedata', (e: any) => {
+        if (e.sourceId === 'contours' && e.tile) {
+          contourTilesLoaded++;
+          if (contourTilesLoading > 5 && contourTilesLoaded === contourTilesLoading) {
+            console.log(`[DEBUG MAP] ✅ All ${contourTilesLoaded} contour tiles loaded`);
+          }
         }
       });
 

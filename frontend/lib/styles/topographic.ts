@@ -181,7 +181,11 @@ const mapStyle = {
       type: 'vector',
       url: getContourTileJsonUrl() || '',
       minzoom: 9,
-      maxzoom: 15,
+      maxzoom: 14,
+      // Force higher-detail tiles at lower zooms for smoother contours
+      // tileSize: 512 fetches tiles from 1 zoom level higher (e.g., zoom 12 tiles at map zoom 11)
+      // Better balance of quality vs performance than 1024 (2 levels higher)
+      tileSize: 512,
     },
     population: {
       type: 'vector',
@@ -289,11 +293,20 @@ const mapStyle = {
         'line-color': '#B8A080',
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
+          9, 0.2,
           10, 0.3,
-          12, 0.5,
-          14, 0.7,
+          11, 0.4,
+          12, 0.6,
+          13, 0.8,
+          14, 1.0,
+          15, 1.2,
         ],
-        'line-opacity': 0.4,
+        'line-opacity': [
+          'interpolate', ['linear'], ['zoom'],
+          9, 0.3,
+          11, 0.4,
+          13, 0.5,
+        ],
       },
     },
     {
@@ -301,7 +314,6 @@ const mapStyle = {
       type: 'line',
       source: 'contours',
       'source-layer': 'contour',
-      // Every 5th line (assuming 10m intervals, so every 50m)
       filter: [
         'all',
         ['has', 'height'],
@@ -312,14 +324,82 @@ const mapStyle = {
         'line-cap': 'round',
       },
       paint: {
-        'line-color': '#8B7355',
+        'line-color': '#6E5A40',
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          10, 0.6,
-          12, 0.9,
-          14, 1.2,
+          9, 0.5,
+          10, 0.8,
+          11, 1.0,
+          12, 1.4,
+          13, 1.8,
+          14, 2.2,
+          15, 2.6,
         ],
-        'line-opacity': 0.6,
+        'line-opacity': [
+          'interpolate', ['linear'], ['zoom'],
+          9, 0.5,
+          11, 0.65,
+          13, 0.8,
+        ],
+      },
+    },
+    {
+      id: 'contours-labels',
+      type: 'symbol',
+      source: 'contours',
+      'source-layer': 'contour',
+      filter: [
+        'all',
+        ['has', 'height'],
+        ['>', ['get', 'height'], 0],
+        [
+          'any',
+          // At low zoom, label 100m intervals
+          [
+            'all',
+            ['<', ['zoom'], 11],
+            ['==', ['%', ['get', 'height'], 100], 0]
+          ],
+          // At medium/high zoom, label 50m intervals
+          [
+            'all',
+            ['>=', ['zoom'], 11],
+            ['==', ['%', ['get', 'height'], 50], 0]
+          ]
+        ]
+      ],
+      layout: {
+        'symbol-placement': 'line',
+        'text-field': ['concat', ['to-string', ['get', 'height']], 'm'],
+        'text-font': ['Noto Sans Regular'],
+        'text-size': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 8,
+          12, 9,
+          14, 10,
+          15, 11,
+        ],
+        'text-padding': 50,
+        'text-max-angle': 30,
+        'symbol-spacing': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 300,
+          12, 350,
+          14, 400,
+        ],
+      },
+      paint: {
+        'text-color': '#5C4830',
+        'text-halo-color': '#F5F2E8',
+        'text-halo-width': 1.5,
+        'text-halo-blur': 0.5,
+        'text-opacity': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 0,
+          11, 0.6,
+          12, 0.8,
+          13, 1,
+        ],
       },
     },
     {
@@ -622,7 +702,7 @@ const layerToggles: LayerToggle[] = [
   {
     id: 'contours',
     name: 'Topography (Contours)',
-    layerIds: ['contours-regular', 'contours-index'],
+    layerIds: ['contours-regular', 'contours-index', 'contours-labels'],
   },
   {
     id: 'population',

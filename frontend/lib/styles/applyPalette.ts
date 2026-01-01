@@ -403,26 +403,42 @@ function updateLayerPaint(
       source: layer.source,
       sourceLayer: layer['source-layer'],
       hasPaint: !!layer.paint,
-      currentOpacity: layer.paint?.['line-opacity'],
+      currentOpacity: layer.paint?.['line-opacity'] || layer.paint?.['text-opacity'],
       contourDensity: layers?.contourDensity
     });
-    
+
     if (type === 'line') {
-      const color = id.includes('index') 
-        ? (palette.contourIndex || palette.contour || palette.secondary || palette.roads.secondary) 
+      const color = id.includes('index')
+        ? (palette.contourIndex || palette.contour || palette.secondary || palette.roads.secondary)
         : (palette.contour || palette.secondary || palette.roads.secondary);
-      
+
       layer.paint = {
         ...layer.paint,
         'line-color': color,
         'line-opacity': layer.paint?.['line-opacity'] ?? 0.4,
       };
-      
+
       console.log('[DEBUG] Contour layer paint updated:', {
         id,
         color,
         opacity: layer.paint['line-opacity'],
         width: layer.paint['line-width']
+      });
+    } else if (type === 'symbol' && id.includes('label')) {
+      // Contour labels - update text color and halo
+      const textColor = palette.contourIndex || palette.text || palette.secondary;
+      const haloColor = palette.background;
+
+      layer.paint = {
+        ...layer.paint,
+        'text-color': textColor,
+        'text-halo-color': haloColor,
+      };
+
+      console.log('[DEBUG] Contour label paint updated:', {
+        id,
+        textColor,
+        haloColor
       });
     }
     applyContourDensity(layer, layers?.contourDensity);
@@ -526,12 +542,12 @@ function updateLayerPaint(
 }
 
 function applyContourDensity(layer: any, density: number | undefined) {
-  if (!density || layer['source-layer'] !== 'contour') {
+  if (!density || layer['source-layer'] !== 'contour' || layer.id?.includes('label')) {
     console.log('[DEBUG] applyContourDensity skipped:', {
       id: layer.id,
       density,
       sourceLayer: layer['source-layer'],
-      reason: !density ? 'no density' : 'wrong source-layer'
+      reason: !density ? 'no density' : (layer.id?.includes('label') ? 'is label layer' : 'wrong source-layer')
     });
     return;
   }
@@ -546,46 +562,108 @@ function applyContourDensity(layer: any, density: number | undefined) {
   // MapTiler contours-v2 uses 'height' property (not 'ele' or 'elevation')
   const hasEle = ['has', 'height'];
   const getEle = ['get', 'height'];
-  
+
+  // Zoom-adaptive intervals: wider intervals at low zoom for better visibility
+  // Low zoom (9-10): 100m intervals
+  // Medium zoom (11-12): 50m intervals
+  // High zoom (13+): User's density setting
+
   if (layer.id.includes('index')) {
+    // Index contours: Always show major intervals (100m at low zoom, 50m otherwise)
     layer.filter = [
       'all',
       hasEle,
-      ['==', ['%', getEle, density * 5], 0]
+      [
+        'any',
+        // At low zoom, show 100m intervals
+        [
+          'all',
+          ['<', ['zoom'], 11],
+          ['==', ['%', getEle, 100], 0]
+        ],
+        // At medium/high zoom, show 50m or user's 5x density
+        [
+          'all',
+          ['>=', ['zoom'], 11],
+          ['==', ['%', getEle, Math.max(50, density * 5)], 0]
+        ]
+      ]
     ];
-    console.log('[DEBUG] Index contour filter:', {
+    console.log('[DEBUG] Index contour filter (zoom-adaptive):', {
       id: layer.id,
       density,
-      interval: density * 5,
-      filter: JSON.stringify(layer.filter),
-      explanation: `Shows elevations at ${density * 5}m intervals (${density * 5}, ${density * 5 * 2}, ${density * 5 * 3}, etc.)`
+      lowZoomInterval: 100,
+      highZoomInterval: Math.max(50, density * 5),
+      filter: JSON.stringify(layer.filter)
     });
   } else if (layer.id.includes('regular')) {
+    // Regular contours: Zoom-adaptive with user density
     layer.filter = [
       'all',
       hasEle,
-      ['==', ['%', getEle, density], 0],
-      ['!=', ['%', getEle, density * 5], 0]
+      [
+        'any',
+        // At low zoom (9-10): Show 50m intervals (but not 100m which are index)
+        [
+          'all',
+          ['<', ['zoom'], 11],
+          ['==', ['%', getEle, 50], 0],
+          ['!=', ['%', getEle, 100], 0]
+        ],
+        // At medium zoom (11-12): Show 20m intervals (but not 100m)
+        [
+          'all',
+          ['>=', ['zoom'], 11],
+          ['<', ['zoom'], 13],
+          ['==', ['%', getEle, 20], 0],
+          ['!=', ['%', getEle, 100], 0]
+        ],
+        // At high zoom (13+): Show user's density (but not index intervals)
+        [
+          'all',
+          ['>=', ['zoom'], 13],
+          ['==', ['%', getEle, density], 0],
+          ['!=', ['%', getEle, Math.max(50, density * 5)], 0]
+        ]
+      ]
     ];
-    console.log('[DEBUG] Regular contour filter:', {
+    console.log('[DEBUG] Regular contour filter (zoom-adaptive):', {
       id: layer.id,
       density,
-      interval: density,
-      indexInterval: density * 5,
-      filter: JSON.stringify(layer.filter),
-      explanation: `Shows elevations at ${density}m intervals EXCEPT those at ${density * 5}m intervals`
+      zoom9_10: '50m (not 100m)',
+      zoom11_12: '20m (not 100m)',
+      zoom13plus: `${density}m (not ${Math.max(50, density * 5)}m)`,
+      filter: JSON.stringify(layer.filter)
     });
   } else {
+    // Simple contours: Just use zoom-adaptive intervals
     layer.filter = [
       'all',
       hasEle,
-      ['==', ['%', getEle, density], 0]
+      [
+        'any',
+        [
+          'all',
+          ['<', ['zoom'], 11],
+          ['==', ['%', getEle, 100], 0]
+        ],
+        [
+          'all',
+          ['>=', ['zoom'], 11],
+          ['<', ['zoom'], 13],
+          ['==', ['%', getEle, 50], 0]
+        ],
+        [
+          'all',
+          ['>=', ['zoom'], 13],
+          ['==', ['%', getEle, density], 0]
+        ]
+      ]
     ];
-    console.log('[DEBUG] Simple contour filter:', {
+    console.log('[DEBUG] Simple contour filter (zoom-adaptive):', {
       id: layer.id,
       density,
-      filter: JSON.stringify(layer.filter),
-      explanation: `Shows elevations at ${density}m intervals`
+      filter: JSON.stringify(layer.filter)
     });
   }
   

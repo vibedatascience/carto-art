@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx shadcn@latest mcp init:*)"
+      "Bash(npx shadcn@latest mcp init:*)",
+      "WebFetch(domain:api.maptiler.com)"
     ]
   }
 }
