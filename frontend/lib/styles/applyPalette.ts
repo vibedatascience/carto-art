@@ -39,52 +39,14 @@ export function applyPaletteToStyle(
   layers?: PosterConfig['layers'],
   layerToggles?: PosterStyle['layerToggles']
 ): any {
-  console.log('[DEBUG] applyPaletteToStyle called:', {
-    hasLayers: !!layers,
-    contoursEnabled: layers?.contours,
-    contourDensity: layers?.contourDensity,
-    hasLayerToggles: !!layerToggles,
-    styleName: style?.name
-  });
-
-  // Count contour layers in original style
-  const originalContourLayers = style.layers?.filter((l: any) =>
-    l.id.includes('contour') || l.source === 'contours'
-  ) || [];
-  console.log('[DEBUG] Original style contour layers:', {
-    count: originalContourLayers.length,
-    layers: originalContourLayers.map((l: any) => ({
-      id: l.id,
-      type: l.type,
-      source: l.source
-    }))
-  });
-  
   // Use a faster/cleaner deep clone if possible, but JSON is safe for Mapbox styles
   const updatedStyle = JSON.parse(JSON.stringify(style));
 
   if (!updatedStyle.layers) {
-    console.warn('[DEBUG] Style has no layers!');
     return updatedStyle;
   }
 
-  const initialContourLayers = updatedStyle.layers.filter((l: any) => 
-    l.id === 'contours' || l.id.includes('contour')
-  );
-  console.log('[DEBUG] Initial contour layers in style:', {
-    count: initialContourLayers.length,
-    ids: initialContourLayers.map((l: any) => l.id)
-  });
-
   handleContourSource(updatedStyle);
-  
-  const afterHandleContourSource = updatedStyle.layers.filter((l: any) => 
-    l.id === 'contours' || l.id.includes('contour')
-  );
-  console.log('[DEBUG] Contour layers after handleContourSource:', {
-    count: afterHandleContourSource.length,
-    ids: afterHandleContourSource.map((l: any) => l.id)
-  });
   
   // Ensure water layers always come after hillshade to hide terrain under water
   reorderLayersForWater(updatedStyle.layers);
@@ -112,93 +74,39 @@ export function applyPaletteToStyle(
     updateLayerLayout(layer, layers);
   });
 
-  // Final state logging for contour layers
-  const finalContourLayers = updatedStyle.layers.filter((l: any) => 
-    l.id === 'contours' || l.id.includes('contour')
-  );
-  
-  console.log('[DEBUG] Final contour layers state:', {
-    count: finalContourLayers.length,
-    layers: finalContourLayers.map((l: any) => ({
-      id: l.id,
-      type: l.type,
-      source: l.source,
-      sourceLayer: l['source-layer'],
-      visibility: l.layout?.visibility,
-      filter: l.filter,
-      filterString: JSON.stringify(l.filter),
-      paint: {
-        color: l.paint?.['line-color'],
-        opacity: l.paint?.['line-opacity'],
-        width: l.paint?.['line-width']
-      }
-    }))
-  });
-  
-  console.log('[DEBUG] Contour source state:', {
-    exists: !!updatedStyle.sources?.contours,
-    url: updatedStyle.sources?.contours?.url?.substring(0, 100),
-    minzoom: updatedStyle.sources?.contours?.minzoom,
-    maxzoom: updatedStyle.sources?.contours?.maxzoom,
-    type: updatedStyle.sources?.contours?.type
-  });
-
   return updatedStyle;
 }
 
 function handleContourSource(style: any) {
   const contourSource = style.sources?.contours;
   
-  console.log('[DEBUG] handleContourSource:', {
-    hasSource: !!contourSource,
-    url: contourSource?.url || 'MISSING',
-    urlLength: contourSource?.url?.length || 0,
-    totalLayers: style.layers?.length || 0,
-    contourLayerIds: style.layers?.filter((l: any) => 
-      l.id === 'contours' || l.id.includes('contour')
-    ).map((l: any) => l.id) || []
-  });
-  
   // If source doesn't exist at all, filter out layers
   if (!contourSource) {
-    console.warn('[DEBUG] Contour source missing - filtering layers');
-    const beforeCount = style.layers?.length || 0;
     style.layers = style.layers.filter((layer: any) => 
       layer.id !== 'contours' && 
       !layer.id.includes('contour') &&
       !layer.id.includes('bathymetry')
     );
-    const afterCount = style.layers?.length || 0;
-    console.warn(`[DEBUG] Filtered out ${beforeCount - afterCount} contour/bathymetry layers`);
     return;
   }
   
   // If source exists but URL is empty, try to regenerate it at runtime
   // This handles cases where getBaseUrl() returned empty at module load time
   if (!contourSource.url || contourSource.url === '') {
-    console.warn('[DEBUG] Contour URL is empty, attempting to regenerate...');
     const url = getContourTileJsonUrl();
-    console.log('[DEBUG] getContourTileJsonUrl() returned:', url ? `URL (${url.length} chars)` : 'null');
     
     if (url) {
       // Set the URL if we can get it now (browser context has window.location)
       contourSource.url = url;
-      console.log('[DEBUG] Contour URL set to:', url.substring(0, 100) + '...');
     } else {
       // Only filter if we're certain the key is missing
       // This should be rare if NEXT_PUBLIC_MAPTILER_KEY is set
-      console.error('[DEBUG] Cannot get contour URL - filtering layers');
-      const beforeCount = style.layers?.length || 0;
       style.layers = style.layers.filter((layer: any) => 
         layer.id !== 'contours' && 
         !layer.id.includes('contour') &&
         !layer.id.includes('bathymetry')
       );
-      const afterCount = style.layers?.length || 0;
-      console.error(`[DEBUG] Filtered out ${beforeCount - afterCount} contour/bathymetry layers`);
     }
-  } else {
-    console.log('[DEBUG] Contour URL exists:', contourSource.url.substring(0, 100) + '...');
   }
   // If URL exists (even if relative), don't filter - let MapLibre handle it
 }
@@ -232,17 +140,6 @@ function applyVisibilityToggles(
   configLayers: PosterConfig['layers'], 
   layerToggles: PosterStyle['layerToggles']
 ) {
-  const contourLayers = styleLayers.filter(l => 
-    l.id === 'contours' || l.id.includes('contour')
-  );
-  
-  console.log('[DEBUG] applyVisibilityToggles - contour layers found:', {
-    count: contourLayers.length,
-    ids: contourLayers.map(l => l.id),
-    contoursEnabled: configLayers?.contours,
-    availableToggles: layerToggles?.map(t => ({ id: t.id, layerIds: t.layerIds }))
-  });
-  
   styleLayers.forEach((layer) => {
     // Initialize layout if it doesn't exist
     if (!layer.layout) {
@@ -266,16 +163,6 @@ function applyVisibilityToggles(
       const toggleValue = configLayers[toggle.id as keyof PosterConfig['layers']];
       const isVisible = Boolean(toggleValue);
       
-      if (layer.id === 'contours' || layer.id.includes('contour')) {
-        console.log('[DEBUG] Contour layer visibility toggle:', {
-          id: layer.id,
-          toggleId: toggle.id,
-          toggleValue,
-          isVisible,
-          layerIds: toggle.layerIds
-        });
-      }
-      
       // For bathymetry layers, we already set visibility above based on terrainUnderWater
       // Only override if this is a different toggle (not terrainUnderWater) that's disabled
       if (layer.id.includes('bathymetry')) {
@@ -288,26 +175,12 @@ function applyVisibilityToggles(
       } else {
         // For non-bathymetry layers, use the toggle's visibility
         layer.layout.visibility = isVisible ? 'visible' : 'none';
-        
-        if (layer.id === 'contours' || layer.id.includes('contour')) {
-          console.log('[DEBUG] Contour layer visibility set:', {
-            id: layer.id,
-            visibility: layer.layout.visibility
-          });
-        }
       }
     } else if (!layer.id.includes('bathymetry')) {
       // For layers not in any toggle and not bathymetry, ensure visibility is set
       // (default to visible if not specified)
       if (layer.layout.visibility === undefined) {
         layer.layout.visibility = 'visible';
-      }
-      
-      if (layer.id === 'contours' || layer.id.includes('contour')) {
-        console.log('[DEBUG] Contour layer has no toggle, defaulting visibility:', {
-          id: layer.id,
-          visibility: layer.layout.visibility
-        });
       }
     } else {
       // Bathymetry layer not in any toggle (shouldn't happen, but handle it)
@@ -410,16 +283,6 @@ function updateLayerPaint(
 
   // Contours
   if (id.includes('contour') || id.includes('topo')) {
-    console.log('[DEBUG] Processing contour layer:', {
-      id,
-      type,
-      source: layer.source,
-      sourceLayer: layer['source-layer'],
-      hasPaint: !!layer.paint,
-      currentOpacity: layer.paint?.['line-opacity'] || layer.paint?.['text-opacity'],
-      contourDensity: layers?.contourDensity
-    });
-
     if (type === 'line') {
       const color = id.includes('index')
         ? (palette.contourIndex || palette.contour || palette.secondary || palette.roads.secondary)
@@ -430,13 +293,6 @@ function updateLayerPaint(
         'line-color': color,
         'line-opacity': layer.paint?.['line-opacity'] ?? 0.4,
       };
-
-      console.log('[DEBUG] Contour layer paint updated:', {
-        id,
-        color,
-        opacity: layer.paint['line-opacity'],
-        width: layer.paint['line-width']
-      });
     } else if (type === 'symbol' && id.includes('label')) {
       // Contour labels - update text color and halo
       const textColor = palette.contourIndex || palette.text || palette.secondary;
@@ -447,12 +303,6 @@ function updateLayerPaint(
         'text-color': textColor,
         'text-halo-color': haloColor,
       };
-
-      console.log('[DEBUG] Contour label paint updated:', {
-        id,
-        textColor,
-        haloColor
-      });
     }
     applyContourDensity(layer, layers?.contourDensity);
     return;
@@ -556,21 +406,8 @@ function updateLayerPaint(
 
 function applyContourDensity(layer: any, density: number | undefined) {
   if (!density || layer['source-layer'] !== 'contour') {
-    console.log('[DEBUG] applyContourDensity skipped:', {
-      id: layer.id,
-      density,
-      sourceLayer: layer['source-layer'],
-      reason: !density ? 'no density' : 'wrong source-layer'
-    });
     return;
   }
-
-  console.log('[DEBUG] applyContourDensity applying:', {
-    id: layer.id,
-    density,
-    previousFilter: layer.filter,
-    previousFilterString: JSON.stringify(layer.filter)
-  });
 
   // MapTiler contours-v2 uses 'height' property (not 'ele' or 'elevation')
   const hasEle = ['has', 'height'];
@@ -608,13 +445,6 @@ function applyContourDensity(layer: any, density: number | undefined) {
         ]
       ]
     ];
-    console.log('[DEBUG] Zoom-adaptive label filter:', {
-      id: layer.id,
-      density,
-      highZoomInterval: density * 5,
-      mediumZoomInterval: 500,
-      lowZoomInterval: 1000
-    });
   } else if (layer.id.includes('index')) {
     // Index contours: Zoom-adaptive major intervals
     layer.filter = [
@@ -644,12 +474,6 @@ function applyContourDensity(layer: any, density: number | undefined) {
         ]
       ]
     ];
-    console.log('[DEBUG] Zoom-adaptive index contour filter:', {
-      id: layer.id,
-      highZoomInterval: density * 5,
-      mediumZoomInterval: 500,
-      lowZoomInterval: 1000
-    });
   } else if (layer.id.includes('regular')) {
     // Regular contours: Zoom-adaptive intermediate intervals
     layer.filter = [
@@ -681,12 +505,6 @@ function applyContourDensity(layer: any, density: number | undefined) {
         ]
       ]
     ];
-    console.log('[DEBUG] Zoom-adaptive regular contour filter:', {
-      id: layer.id,
-      highZoomInterval: density,
-      mediumZoomLogic: 'all except 500m',
-      lowZoomInterval: 200
-    });
   } else {
     // Simple contours: Just user's density
     layer.filter = [
@@ -694,19 +512,7 @@ function applyContourDensity(layer: any, density: number | undefined) {
       hasEle,
       ['==', ['%', getEle, density], 0]
     ];
-    console.log('[DEBUG] Simple contour filter:', {
-      id: layer.id,
-      density,
-      filter: JSON.stringify(layer.filter),
-      explanation: `Shows elevations at ${density}m intervals`
-    });
   }
-  
-  console.log('[DEBUG] applyContourDensity result:', {
-    id: layer.id,
-    newFilter: layer.filter,
-    newFilterString: JSON.stringify(layer.filter)
-  });
 }
 
 function updateRoadLayer(layer: any, palette: ColorPalette, labelAdjustment: number) {
