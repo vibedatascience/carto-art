@@ -56,7 +56,7 @@ export const styleVariants: Record<string, StyleVariantConfig> = {
     roadStyle: 'round',
     roadOptions: { lineCap: 'round', lineJoin: 'round', includeGlow: false },
     labelStyle: 'halo',
-    includeSpaceports: false,
+    includeSpaceports: true,
   },
   midnight: {
     roadStyle: 'round',

@@ -151,15 +151,5 @@ export const abstractStyle: PosterStyle = buildStyle({
       citySize: [4, 12, 12, 19],
       style: 'strong', // Use 'strong' style for thicker halos (width: 3, blur: 1)
     },
-    poi: {
-      // All GeoJSON features are spaceports by definition, so filter by name matching
-      // Updated to use 'name' property (GeoJSON doesn't have 'class', 'name:en', or 'name:latin')
-      spaceportLabelFilter: [
-        'any',
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'space center'], 0],
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'spaceport'], 0],
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'ksc'], 0],
-      ],
-    },
   },
 });

@@ -226,16 +226,6 @@ export const minimalStyle: PosterStyle = buildStyle({
       hillshadeHighlightColor: defaultPalette.background,
       hillshadeAccentColor: defaultPalette.roads.secondary,
     },
-    poi: {
-      // All GeoJSON features are spaceports by definition, so filter by name matching
-      // Updated to use 'name' property (GeoJSON doesn't have 'class', 'name:en', or 'name:latin')
-      spaceportLabelFilter: [
-        'any',
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'space center'], 0],
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'spaceport'], 0],
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'ksc'], 0],
-      ],
-    },
     layerToggles: {
       customLayerIds: {
         streets: [

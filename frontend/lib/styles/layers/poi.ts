@@ -177,7 +177,9 @@ export function createPOILayers(
         'text-size': ['interpolate', ['linear'], ['zoom'], 8, 8, 10, 9, 14, 12], // Adjusted for new minzoom
         'text-padding': 2, // Reduced padding to allow more labels to show
         'text-anchor': 'top',
-        'text-offset': [0, 0.5],
+        // Offset to top-right: 0.6 units right, 1.2 units up
+        // This places the label above and to the right of the pad centroid
+        'text-offset': [0.6, 1.2],
         'text-allow-overlap': true, // Changed to true so labels show even when overlapping
         'text-ignore-placement': true, // Ignore placement conflicts with other symbols to ensure labels display
         'text-optional': false,

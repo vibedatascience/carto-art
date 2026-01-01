@@ -177,16 +177,6 @@ export const blueprintStyle: PosterStyle = buildStyle({
       hillshadeAccentColor: '#061322',
       hillshadeExaggeration: 0.5,
     },
-    poi: {
-      // All GeoJSON features are spaceports by definition, so filter by name matching
-      // Updated to use 'name' property (GeoJSON doesn't have 'class', 'name:en', or 'name:latin')
-      spaceportLabelFilter: [
-        'any',
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'space center'], 0],
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'spaceport'], 0],
-        ['>=', ['index-of', ['downcase', ['get', 'name']], 'ksc'], 0],
-      ],
-    },
     layerToggles: {
       customLayerIds: {
         water: ['water'], // Blueprint doesn't include waterway in water toggle
