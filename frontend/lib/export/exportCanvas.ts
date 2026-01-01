@@ -204,6 +204,9 @@ export async function exportMapToPNG(options: ExportOptions): Promise<Blob> {
       applyTexture(exportCtx, exportResolution.width, exportResolution.height, texture, textureIntensity);
     }
 
+    // 9. WATERMARK
+    drawWatermark(exportCtx, exportResolution.width, exportResolution.height);
+
     return new Promise<Blob>((resolve, reject) => {
       exportCanvas.toBlob((blob) => {
         if (blob) resolve(blob);
@@ -219,6 +222,34 @@ export async function exportMapToPNG(options: ExportOptions): Promise<Blob> {
     map.getCanvas().height = originalHeight;
     map.resize();
   }
+}
+
+function drawWatermark(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): void {
+  const watermarkText = 'https://www.cartoart.net';
+  
+  // Calculate font size as a percentage of canvas width (small and subtle)
+  const fontSize = Math.max(12, Math.round(width * 0.015));
+  const padding = Math.max(20, Math.round(width * 0.02));
+  
+  ctx.save();
+  ctx.font = `${fontSize}px sans-serif`;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.globalAlpha = 0.5; // Semi-transparent
+  
+  // Use a color that contrasts with both light and dark backgrounds
+  // Using a gray that should be visible on most backgrounds
+  ctx.fillStyle = '#666666';
+  
+  const x = width - padding;
+  const y = height - padding;
+  
+  ctx.fillText(watermarkText, x, y);
+  ctx.restore();
 }
 
 export function downloadBlob(blob: Blob, filename: string): void {
