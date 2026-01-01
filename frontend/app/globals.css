@@ -136,3 +136,27 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* Ko-fi widget positioning - move to right side */
+.floatingchat-container-wrap,
+[class*="floatingchat"],
+[class*="floating-chat"] {
+  left: unset !important;
+  right: 16px !important;
+}
+
+.floating-chat-kofi-popup-iframe,
+[class*="floating-chat"][class*="popup"],
+[class*="floating-chat"][class*="iframe"],
+[id*="floating-chat"] {
+  left: unset !important;
+  right: 16px !important;
+}
+
+/* Target any Ko-fi widget containers */
+iframe[src*="ko-fi.com"],
+div[class*="kofi"],
+div[id*="kofi"] {
+  left: unset !important;
+  right: 16px !important;
+}
