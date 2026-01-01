@@ -59,14 +59,16 @@ export function MapPreview({
 
 
   const handleLoad = useCallback(() => {
+    console.log('🚀 [SPACEPORT DEBUG] handleLoad called - map should be loading');
     if (mapRef.current && onMapLoad) {
       const map = mapRef.current.getMap();
+      console.log('🚀 [SPACEPORT DEBUG] Map instance obtained, calling onMapLoad');
       onMapLoad(map);
 
-      // Debug: Check for aeroway and POI data
-      console.log('🛫 [POI/AEROWAY CHECK] Starting check...');
+      // Debug: Check for aeroway and POI data, specifically spaceports
+      console.log('🚀 [SPACEPORT DEBUG] Starting spaceport data check...');
       map.once('idle', () => {
-        console.log('🛫 [POI/AEROWAY CHECK] Map is idle, checking data...');
+        console.log('🚀 [SPACEPORT DEBUG] Map is idle, checking spaceport data...');
         try {
           const aerowayFeatures = map.querySourceFeatures('openmaptiles', {
             sourceLayer: 'aeroway'
@@ -78,29 +80,103 @@ export function MapPreview({
             sourceLayer: 'poi'
           });
 
-           console.log('🛫 [POI/AEROWAY CHECK] Data in tiles:', {
-             aerowayCount: aerowayFeatures.length,
-             aerodromeCount: aerodromeFeatures.length,
-             poiCount: poiFeatures.length,
-             aerowayClasses: aerowayFeatures.length > 0 ? [...new Set(aerowayFeatures.map((f: any) => f.properties?.class))] : 'no data',
-             poiClasses: poiFeatures.length > 0 ? [...new Set(poiFeatures.slice(0, 20).map((f: any) => f.properties?.class))] : 'no data',
-             sampleAerodrome: aerodromeFeatures[0]?.properties,
-             samplePOI: poiFeatures[0]?.properties,
-             zoom: map.getZoom().toFixed(2)
-           });
+          // Specifically filter for spaceports
+          const spaceportAreas = aerowayFeatures.filter((f: any) => 
+            f.properties?.class === 'spaceport' || 
+            (f.properties?.name && typeof f.properties.name === 'string' && 
+             f.properties.name.toLowerCase().includes('spaceport'))
+          );
+          
+          const spaceportLabels = aerodromeFeatures.filter((f: any) => 
+            f.properties?.class === 'spaceport' ||
+            (f.properties?.name && typeof f.properties.name === 'string' && 
+             (f.properties.name.toLowerCase().includes('spaceport') ||
+              f.properties.name.toLowerCase().includes('space center') ||
+              f.properties.name.toLowerCase().includes('ksc')))
+          );
 
-           // Check if layers exist and are visible
-           const layerCheck = ['aeroway-area', 'aeroway-runway', 'aerodrome-label', 'poi-symbol', 'poi-label'].map(id => {
-             const layer = map.getLayer(id);
-             return {
-               id,
-               exists: !!layer,
-               visibility: layer ? (layer as any).layout?.visibility : 'n/a'
-             };
-           });
-           console.log('🛫 [POI/AEROWAY CHECK] Layer status:', layerCheck);
-         } catch (err) {
-           console.error('🛫 [POI/AEROWAY CHECK] Error:', err);
+          console.log('🚀 [SPACEPORT DEBUG] Spaceport-specific data:', {
+            spaceportAreaCount: spaceportAreas.length,
+            spaceportLabelCount: spaceportLabels.length,
+            currentZoom: map.getZoom().toFixed(2),
+            spaceportAreaFeatures: spaceportAreas.map((f: any) => ({
+              class: f.properties?.class,
+              name: f.properties?.name || f.properties?.['name:en'] || f.properties?.['name:latin'],
+              geometry: f.geometry?.type
+            })),
+            spaceportLabelFeatures: spaceportLabels.map((f: any) => ({
+              class: f.properties?.class,
+              name: f.properties?.name || f.properties?.['name:en'] || f.properties?.['name:latin'],
+              geometry: f.geometry?.type
+            }))
+          });
+
+          // Check all aeroway classes for debugging
+          const aerowayClasses = aerowayFeatures.length > 0 
+            ? [...new Set(aerowayFeatures.map((f: any) => f.properties?.class).filter(Boolean))]
+            : [];
+          const aerodromeClasses = aerodromeFeatures.length > 0
+            ? [...new Set(aerodromeFeatures.map((f: any) => f.properties?.class).filter(Boolean))]
+            : [];
+
+          console.log('🚀 [SPACEPORT DEBUG] Available classes in source layers:', {
+            aerowayClasses,
+            aerodromeClasses,
+            totalAerowayCount: aerowayFeatures.length,
+            totalAerodromeCount: aerodromeFeatures.length
+          });
+
+          // Check if spaceport layers exist and their configuration
+          const spaceportAreaLayer = map.getLayer('spaceport-area');
+          const spaceportLabelLayer = map.getLayer('spaceport-label');
+          
+          console.log('🚀 [SPACEPORT DEBUG] Spaceport layer configuration:', {
+            spaceportAreaLayer: spaceportAreaLayer ? {
+              exists: true,
+              visibility: (spaceportAreaLayer as any).layout?.visibility || 'visible (default)',
+              sourceLayer: (spaceportAreaLayer as any).sourceLayer,
+              filter: (spaceportAreaLayer as any).filter,
+              paint: (spaceportAreaLayer as any).paint
+            } : { exists: false },
+            spaceportLabelLayer: spaceportLabelLayer ? {
+              exists: true,
+              visibility: (spaceportLabelLayer as any).layout?.visibility || 'visible (default)',
+              sourceLayer: (spaceportLabelLayer as any).sourceLayer,
+              filter: (spaceportLabelLayer as any).filter,
+              minzoom: (spaceportLabelLayer as any).minzoom,
+              layout: {
+                'text-field': (spaceportLabelLayer as any).layout?.['text-field'],
+                'text-allow-overlap': (spaceportLabelLayer as any).layout?.['text-allow-overlap'],
+                'text-optional': (spaceportLabelLayer as any).layout?.['text-optional'],
+                'text-size': (spaceportLabelLayer as any).layout?.['text-size']
+              }
+            } : { exists: false }
+          });
+
+          // Check if we have spaceport areas but no labels
+          if (spaceportAreas.length > 0 && spaceportLabels.length === 0) {
+            logger.warn('🚀 [SPACEPORT DEBUG] ⚠️ Found spaceport areas but NO matching labels in aerodrome_label layer!', {
+              areaCount: spaceportAreas.length,
+              areas: spaceportAreas.map((f: any) => ({
+                name: f.properties?.name || f.properties?.['name:en'] || f.properties?.['name:latin'],
+                class: f.properties?.class
+              })),
+              suggestion: 'Labels may not exist in aerodrome_label source layer, or filter may be too restrictive'
+            });
+          }
+
+          // General layer check
+          const layerCheck = ['aeroway-area', 'aeroway-runway', 'aerodrome-label', 'spaceport-area', 'spaceport-label', 'poi-symbol', 'poi-label'].map(id => {
+            const layer = map.getLayer(id);
+            return {
+              id,
+              exists: !!layer,
+              visibility: layer ? ((layer as any).layout?.visibility || 'visible (default)') : 'n/a'
+            };
+          });
+          console.log('🚀 [SPACEPORT DEBUG] All POI-related layer status:', layerCheck);
+        } catch (err) {
+          logger.error('🚀 [SPACEPORT DEBUG] Error checking spaceport data:', err);
         }
       });
 

@@ -67,7 +67,7 @@ export function LayerControls({ layers, onLayersChange, availableToggles, palett
     ['labels', 'labels-admin', 'labels-cities'].includes(t.id)
   );
   const dataLayers = availableToggles.filter(t => 
-    ['streets', 'population'].includes(t.id)
+    ['streets', 'population', 'pois'].includes(t.id)
   );
 
   const renderLayerItem = (item: LayerToggle) => {

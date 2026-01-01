@@ -371,7 +371,13 @@ const mapStyle = {
       source: 'openmaptiles',
       'source-layer': 'aerodrome_label',
       minzoom: 10,
-      filter: ['==', ['get', 'class'], 'spaceport'],
+      filter: [
+        'any',
+        ['==', ['get', 'class'], 'spaceport'],
+        ['>=', ['index-of', ['downcase', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]], 'space center'], 0],
+        ['>=', ['index-of', ['downcase', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]], 'spaceport'], 0],
+        ['>=', ['index-of', ['downcase', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]], 'ksc'], 0],
+      ],
       layout: {
         'text-field': ['concat', '🚀 ', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]],
         'text-font': ['Noto Sans Regular'],
