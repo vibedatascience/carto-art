@@ -54,7 +54,7 @@ export function ExportButton({ onExport, isExporting }: ExportButtonProps) {
           "transition-all duration-300",
           isExporting && "translate-x-4"
         )}>
-          {isExporting ? 'Exporting...' : 'Download PNG'}
+          {isExporting ? 'Exporting...' : 'Export Poster'}
         </span>
       </button>
 

@@ -206,8 +206,17 @@ export function PosterEditor() {
                 {/* Compass Rose Preview (SVG) */}
                 {(config.format.maskShape || 'rectangular') === 'circular' && config.format.compassRose && (
                   <svg 
-                    className="absolute inset-0 w-full h-full"
-                    style={{ pointerEvents: 'none' }}
+                    className="absolute"
+                    style={{ 
+                      pointerEvents: 'none', 
+                      overflow: 'visible',
+                      top: '-4cqw',
+                      left: '-4cqw',
+                      right: '-4cqw',
+                      bottom: '-4cqw',
+                      width: 'calc(100% + 8cqw)',
+                      height: 'calc(100% + 8cqw)',
+                    }}
                     viewBox="0 0 100 100"
                   >
                     <g
@@ -230,12 +239,12 @@ export function PosterEditor() {
                         const rad = ((angle - 90) * Math.PI) / 180;
                         const centerX = 50;
                         const centerY = 50;
-                        // The border div extends nearly to the edges of the viewBox
-                        // Account for border width - border can be 0.5cqw to 1.5cqw, which in viewBox terms is roughly 0.5-1.5
-                        const borderOuterRadius = 49; // Close to edge of 100x100 viewBox, accounting for border
-                        const spacing = 3; // Spacing between border and compass elements
+                        // Border is at the edge of the original 100x100 viewBox
+                        // Position compass just outside the border
+                        const borderOuterRadius = 49.5; // Outer edge of border in 100x100 coordinate system
+                        const spacing = 0.4; // Spacing between border and compass elements
                         const compassRadius = borderOuterRadius + spacing; // Position ticks outside border
-                        const tickLen = label === 'N' || label === 'S' || label === 'E' || label === 'W' ? 3 : 1.5;
+                        const tickLen = label === 'N' || label === 'S' || label === 'E' || label === 'W' ? 1.2 : 0.6;
                         
                         const x1 = centerX + Math.cos(rad) * compassRadius;
                         const y1 = centerY + Math.sin(rad) * compassRadius;
@@ -243,7 +252,7 @@ export function PosterEditor() {
                         const y2 = centerY + Math.sin(rad) * (compassRadius - tickLen);
                         
                         // Position labels further out from the ticks
-                        const labelRadius = compassRadius + 3;
+                        const labelRadius = compassRadius + 1.2;
                         const labelX = centerX + Math.cos(rad) * labelRadius;
                         const labelY = centerY + Math.sin(rad) * labelRadius;
                         
@@ -253,7 +262,7 @@ export function PosterEditor() {
                             <text
                               x={labelX}
                               y={labelY}
-                              fontSize="2"
+                              fontSize="1.2"
                               fontWeight="bold"
                               textAnchor="middle"
                               dominantBaseline="middle"
@@ -271,10 +280,10 @@ export function PosterEditor() {
                         const angle = (i * 15 - 90) * (Math.PI / 180);
                         const centerX = 50;
                         const centerY = 50;
-                        const borderOuterRadius = 49;
-                        const spacing = 3;
+                        const borderOuterRadius = 49.5;
+                        const spacing = 0.4;
                         const compassRadius = borderOuterRadius + spacing;
-                        const tickLen = 1;
+                        const tickLen = 0.4;
                         
                         const x1 = centerX + Math.cos(angle) * compassRadius;
                         const y1 = centerY + Math.sin(angle) * compassRadius;
