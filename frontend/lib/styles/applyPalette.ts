@@ -543,9 +543,9 @@ function applyContourDensity(layer: any, density: number | undefined) {
     previousFilterString: JSON.stringify(layer.filter)
   });
 
-  // MapTiler contours-v2 uses 'elevation' property (not 'ele')
-  const hasEle = ['has', 'elevation'];
-  const getEle = ['get', 'elevation'];
+  // MapTiler contours-v2 uses 'height' property (not 'ele' or 'elevation')
+  const hasEle = ['has', 'height'];
+  const getEle = ['get', 'height'];
   
   if (layer.id.includes('index')) {
     layer.filter = [

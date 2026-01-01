@@ -193,8 +193,8 @@ const mapStyle = {
       'source-layer': 'contour',
       filter: [
         'all',
-        ['has', 'elevation'],
-        ['<', ['get', 'elevation'], 0]
+        ['has', 'height'],
+        ['<', ['get', 'height'], 0]
       ],
       paint: {
         'line-color': '#001a33',

@@ -224,8 +224,8 @@ const mapStyle = {
       'source-layer': 'contour',
       filter: [
         'all',
-        ['has', 'elevation'],
-        ['<=', ['get', 'elevation'], -depth]
+        ['has', 'height'],
+        ['<=', ['get', 'height'], -depth]
       ],
       paint: {
         'line-color': '#001a33',
@@ -278,8 +278,8 @@ const mapStyle = {
       'source-layer': 'contour',
       filter: [
         'all',
-        ['has', 'elevation'],
-        ['!=', ['%', ['get', 'elevation'], 50], 0]
+        ['has', 'height'],
+        ['!=', ['%', ['get', 'height'], 50], 0]
       ],
       layout: {
         'line-join': 'round',
@@ -304,8 +304,8 @@ const mapStyle = {
       // Every 5th line (assuming 10m intervals, so every 50m)
       filter: [
         'all',
-        ['has', 'elevation'],
-        ['==', ['%', ['get', 'elevation'], 50], 0]
+        ['has', 'height'],
+        ['==', ['%', ['get', 'height'], 50], 0]
       ],
       layout: {
         'line-join': 'round',

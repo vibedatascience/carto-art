@@ -160,15 +160,15 @@ export function MapPreview({
                 }))
               });
 
-              // Now query with the elevation filter (MapTiler contours-v2 uses 'elevation' not 'ele')
-              const featuresWithElevation = map.querySourceFeatures('contours', {
+              // Now query with the height filter (MapTiler contours-v2 uses 'height' not 'ele' or 'elevation')
+              const featuresWithHeight = map.querySourceFeatures('contours', {
                 sourceLayer: 'contour',
-                filter: ['has', 'elevation']
+                filter: ['has', 'height']
               });
 
-              console.log('[DEBUG MAP] Contour features with elevation property:', {
-                count: featuresWithElevation.length,
-                sampleFeatures: featuresWithElevation.slice(0, 5).map((f: any) => ({
+              console.log('[DEBUG MAP] Contour features with height property:', {
+                count: featuresWithHeight.length,
+                sampleFeatures: featuresWithHeight.slice(0, 5).map((f: any) => ({
                   id: f.id,
                   properties: f.properties,
                   geometry: f.geometry?.type
@@ -205,7 +205,7 @@ export function MapPreview({
                   sample: uniqueElevations.slice(0, 20),
                   intervals: uniqueElevations.slice(1).map((val, i) => val - uniqueElevations[i]).slice(0, 10)
                 });
-                console.warn(`[DEBUG MAP] ⚠️ CRITICAL: Contours use property "${foundPropertyName}" but filters expect "ele"!`);
+                console.log(`[DEBUG MAP] ✅ Contours use property "${foundPropertyName}" - filters should match this property name`);
               } else if (allFeatures.length > 0) {
                 const allPropertyKeys = [...new Set(allFeatures.flatMap((f: any) => Object.keys(f.properties || {})))];
                 console.warn('[DEBUG MAP] Features exist but no elevation property found. Property names:', allPropertyKeys);
