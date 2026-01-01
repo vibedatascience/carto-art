@@ -5,10 +5,11 @@ import { logger } from '@/lib/logger';
 export const runtime = 'nodejs';
 
 // Use require for lru-cache to work around Next.js/Turbopack ESM module resolution issues
-const { LRUCache } = require('lru-cache');
+import type { LRUCache } from 'lru-cache';
+const LRUCacheConstructor = require('lru-cache').LRUCache as new <K, V>(options?: any) => LRUCache<K, V>;
 
 // Use LRU cache for better eviction strategy and automatic TTL management
-const cache = new LRUCache<string, unknown>({
+const cache = new LRUCacheConstructor<string, unknown>({
   max: CACHE.SIZE_LIMIT,
   ttl: CACHE.TTL_MS,
 });

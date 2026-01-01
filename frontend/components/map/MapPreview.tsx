@@ -80,11 +80,23 @@ export function MapPreview({
             sourceLayer: 'poi'
           });
 
+          // Check geometry types in aeroway
+          const aerowayPoints = aerowayFeatures.filter((f: any) => f.geometry?.type === 'Point');
+          const aerowayPolygons = aerowayFeatures.filter((f: any) => f.geometry?.type === 'Polygon');
+          
           // Specifically filter for spaceports
-          const spaceportAreas = aerowayFeatures.filter((f: any) => 
+          const spaceportAreas = aerowayPolygons.filter((f: any) => 
             f.properties?.class === 'spaceport' || 
             (f.properties?.name && typeof f.properties.name === 'string' && 
              f.properties.name.toLowerCase().includes('spaceport'))
+          );
+          
+          const spaceportPoints = aerowayPoints.filter((f: any) => 
+            f.properties?.class === 'spaceport' ||
+            (f.properties?.name && typeof f.properties.name === 'string' && 
+             (f.properties.name.toLowerCase().includes('spaceport') ||
+              f.properties.name.toLowerCase().includes('space center') ||
+              f.properties.name.toLowerCase().includes('ksc')))
           );
           
           const spaceportLabels = aerodromeFeatures.filter((f: any) => 
@@ -95,11 +107,26 @@ export function MapPreview({
               f.properties.name.toLowerCase().includes('ksc')))
           );
 
+          console.log('🚀 [SPACEPORT DEBUG] Aeroway geometry breakdown:', {
+            totalAeroway: aerowayFeatures.length,
+            polygons: aerowayPolygons.length,
+            points: aerowayPoints.length,
+            spaceportAreas: spaceportAreas.length,
+            spaceportPoints: spaceportPoints.length,
+            spaceportLabelsFromAerodrome: spaceportLabels.length
+          });
+
           console.log('🚀 [SPACEPORT DEBUG] Spaceport-specific data:', {
             spaceportAreaCount: spaceportAreas.length,
+            spaceportPointCount: spaceportPoints.length,
             spaceportLabelCount: spaceportLabels.length,
             currentZoom: map.getZoom().toFixed(2),
             spaceportAreaFeatures: spaceportAreas.map((f: any) => ({
+              class: f.properties?.class,
+              name: f.properties?.name || f.properties?.['name:en'] || f.properties?.['name:latin'],
+              geometry: f.geometry?.type
+            })),
+            spaceportPointFeatures: spaceportPoints.map((f: any) => ({
               class: f.properties?.class,
               name: f.properties?.name || f.properties?.['name:en'] || f.properties?.['name:latin'],
               geometry: f.geometry?.type
@@ -154,14 +181,19 @@ export function MapPreview({
           });
 
           // Check if we have spaceport areas but no labels
-          if (spaceportAreas.length > 0 && spaceportLabels.length === 0) {
-            logger.warn('🚀 [SPACEPORT DEBUG] ⚠️ Found spaceport areas but NO matching labels in aerodrome_label layer!', {
+          if (spaceportAreas.length > 0 && spaceportLabels.length === 0 && spaceportPoints.length === 0) {
+            console.warn('🚀 [SPACEPORT DEBUG] ⚠️ Found spaceport areas but NO matching labels in aerodrome_label or point features in aeroway!', {
               areaCount: spaceportAreas.length,
               areas: spaceportAreas.map((f: any) => ({
                 name: f.properties?.name || f.properties?.['name:en'] || f.properties?.['name:latin'],
                 class: f.properties?.class
               })),
-              suggestion: 'Labels may not exist in aerodrome_label source layer, or filter may be too restrictive'
+              suggestion: 'Labels may not exist in aerodrome_label source layer. Consider using aeroway point features if available.'
+            });
+          } else if (spaceportAreas.length > 0 && spaceportPoints.length > 0) {
+            console.log('🚀 [SPACEPORT DEBUG] ✓ Found spaceport areas AND point features in aeroway - labels should work!', {
+              areaCount: spaceportAreas.length,
+              pointCount: spaceportPoints.length
             });
           }
 

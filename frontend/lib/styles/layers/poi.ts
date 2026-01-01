@@ -136,9 +136,10 @@ export function createPOILayers(
     const defaultSpaceportFilter = ['==', ['get', 'class'], 'spaceport'];
     
     // Debug logging for spaceport layer creation
-    console.log('🚀 [SPACEPORT LAYER] Creating spaceport layers with filter:', {
+    console.log('🚀 [SPACEPORT LAYER] Creating spaceport layers:', {
       usingCustomFilter: !!spaceportLabelFilter,
-      filter: spaceportLabelFilter || defaultSpaceportFilter,
+      labelFilter: spaceportLabelFilter || defaultSpaceportFilter,
+      labelSourceLayer: 'aeroway',  // Now using aeroway instead of aerodrome_label
       spaceportOpacity,
       spaceportColor: spaceportColor || 'using palette.accent'
     });
@@ -155,13 +156,19 @@ export function createPOILayers(
       },
     };
     
+    // Use aeroway source layer with Point geometry filter instead of aerodrome_label
+    // since aerodrome_label often doesn't contain spaceport data
+    const spaceportLabelFilterForAeroway = spaceportLabelFilter 
+      ? ['all', ['==', ['geometry-type'], 'Point'], spaceportLabelFilter]
+      : ['all', ['==', ['geometry-type'], 'Point'], ['==', ['get', 'class'], 'spaceport']];
+    
     const spaceportLabelLayer = {
       id: 'spaceport-label',
       type: 'symbol',
       source: 'openmaptiles',
-      'source-layer': 'aerodrome_label',
+      'source-layer': 'aeroway',  // Changed from 'aerodrome_label' to 'aeroway'
       minzoom: 10,
-      filter: spaceportLabelFilter || defaultSpaceportFilter,
+      filter: spaceportLabelFilterForAeroway,
       layout: {
         'text-field': ['concat', '🚀 ', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]],
         'text-font': ['Noto Sans Regular'],
@@ -169,6 +176,8 @@ export function createPOILayers(
         'text-padding': 5,
         'text-anchor': 'top',
         'text-offset': [0, 0.5],
+        'text-allow-overlap': false,
+        'text-optional': false,
       },
       paint: {
         'text-color': palette.text,
