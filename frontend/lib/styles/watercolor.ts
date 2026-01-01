@@ -577,6 +577,137 @@ const mapStyle = {
         'text-halo-blur': 1.0,
       },
     },
+    // Aeroway polygons (airports, runways)
+    {
+      id: 'aeroway-area',
+      type: 'fill',
+      source: 'openmaptiles',
+      'source-layer': 'aeroway',
+      filter: ['==', ['geometry-type'], 'Polygon'],
+      paint: {
+        'fill-color': defaultPalette.secondary,
+        'fill-opacity': 0.3,
+      },
+    },
+    {
+      id: 'aeroway-runway',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'aeroway',
+      filter: ['all', ['==', ['geometry-type'], 'LineString'], ['==', ['get', 'class'], 'runway']],
+      paint: {
+        'line-color': defaultPalette.secondary,
+        'line-width': [
+          'interpolate', ['linear'], ['zoom'],
+          10, 0.5,
+          12, 2,
+          14, 4
+        ],
+      },
+    },
+    // Aerodrome labels (airports)
+    {
+      id: 'aerodrome-label',
+      type: 'symbol',
+      source: 'openmaptiles',
+      'source-layer': 'aerodrome_label',
+      minzoom: 10,
+      layout: {
+        'text-field': ['concat', '✈ ', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]],
+        'text-font': ['Noto Sans Regular'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 9, 14, 12],
+        'text-padding': 5,
+        'text-anchor': 'top',
+        'text-offset': [0, 0.5],
+      },
+      paint: {
+        'text-color': defaultPalette.text,
+        'text-halo-color': defaultPalette.background,
+        'text-halo-width': 1.5,
+        'text-halo-blur': 0.5,
+      },
+    },
+    // Spaceport areas
+    {
+      id: 'spaceport-area',
+      type: 'fill',
+      source: 'openmaptiles',
+      'source-layer': 'aeroway',
+      filter: ['all', ['==', ['geometry-type'], 'Polygon'], ['==', ['get', 'class'], 'spaceport']],
+      paint: {
+        'fill-color': defaultPalette.accent || defaultPalette.secondary,
+        'fill-opacity': 0.3,
+      },
+    },
+    // Spaceport labels
+    {
+      id: 'spaceport-label',
+      type: 'symbol',
+      source: 'openmaptiles',
+      'source-layer': 'aerodrome_label',
+      minzoom: 10,
+      filter: ['==', ['get', 'class'], 'spaceport'],
+      layout: {
+        'text-field': ['concat', '🚀 ', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]],
+        'text-font': ['Noto Sans Regular'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 9, 14, 12],
+        'text-padding': 5,
+        'text-anchor': 'top',
+        'text-offset': [0, 0.5],
+      },
+      paint: {
+        'text-color': defaultPalette.text,
+        'text-halo-color': defaultPalette.background,
+        'text-halo-width': 1.5,
+        'text-halo-blur': 0.5,
+      },
+    },
+    // General POI symbols
+    {
+      id: 'poi-symbol',
+      type: 'circle',
+      source: 'openmaptiles',
+      'source-layer': 'poi',
+      minzoom: 12,
+      filter: [
+        'in',
+        ['get', 'class'],
+        ['literal', ['monument', 'museum', 'stadium', 'attraction', 'artwork', 'viewpoint']]
+      ],
+      paint: {
+        'circle-radius': 3,
+        'circle-color': defaultPalette.primary,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': defaultPalette.background,
+      },
+    },
+    {
+      id: 'poi-label',
+      type: 'symbol',
+      source: 'openmaptiles',
+      'source-layer': 'poi',
+      minzoom: 13,
+      filter: [
+        'in',
+        ['get', 'class'],
+        ['literal', ['monument', 'museum', 'stadium', 'attraction', 'artwork', 'viewpoint']]
+      ],
+      layout: {
+        'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']],
+        'text-font': ['Noto Sans Regular'],
+        'text-size': 9,
+        'text-padding': 5,
+        'text-anchor': 'top',
+        'text-offset': [0, 0.8],
+      },
+      paint: {
+        'text-color': defaultPalette.text,
+        'text-halo-color': defaultPalette.background,
+        'text-halo-width': 1.5,
+        'text-halo-blur': 0.5,
+        'text-opacity': 0.8,
+      },
+    },
     {
       id: 'labels-city',
       type: 'symbol',
@@ -667,6 +798,11 @@ const layerToggles: LayerToggle[] = [
     id: 'labels-cities',
     name: 'City Names',
     layerIds: ['labels-city'],
+  },
+  {
+    id: 'pois',
+    name: 'Points of Interest',
+    layerIds: ['aeroway-area', 'aeroway-runway', 'aerodrome-label', 'spaceport-area', 'spaceport-label', 'poi-symbol', 'poi-label'],
   },
 ];
 

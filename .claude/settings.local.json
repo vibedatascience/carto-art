@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npx shadcn@latest mcp init:*)",
-      "WebFetch(domain:api.maptiler.com)"
+      "WebFetch(domain:api.maptiler.com)",
+      "Bash(for file in midnight.ts atmospheric.ts watercolor.ts organic.ts abstract.ts)",
+      "Bash(do grep -n \"const layerToggles\" \"C:\\\\Users\\\\Kyle\\\\Documents\\\\code\\\\carto-art\\\\frontend\\\\lib\\\\styles$file\")",
+      "Bash(echo:*)",
+      "Bash(done)"
     ]
   }
 }

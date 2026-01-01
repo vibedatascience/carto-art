@@ -1,5 +1,14 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Variables
+
+Create a `.env.local` file in the `frontend/` directory with the following variables:
+
+```bash
+# Google Analytics ID (optional - leave empty to disable analytics)
+NEXT_PUBLIC_GA_ID=G-3TZH3H4MVW
+```
+
 ## Getting Started
 
 First, run the development server:

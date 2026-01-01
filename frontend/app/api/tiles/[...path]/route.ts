@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/lib/logger';
 
 const SOURCES: Record<string, string> = {
   openfreemap: 'https://tiles.openfreemap.org/',
@@ -8,6 +9,9 @@ const SOURCES: Record<string, string> = {
   'aws-terrain': 'https://s3.amazonaws.com/elevation-tiles-prod/',
 };
 
+// Allowlist of valid source keys for security
+const ALLOWED_SOURCES = Object.keys(SOURCES);
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
@@ -16,18 +20,39 @@ export async function GET(
     const { path: pathArray } = await params;
     
     if (!pathArray || pathArray.length < 2) {
-      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid path: path must contain at least 2 segments' }, { status: 400 });
     }
 
     const sourceKey = pathArray[0];
-    const baseUrl = SOURCES[sourceKey];
     
-    if (!baseUrl) {
-      return NextResponse.json({ error: `Unknown source: ${sourceKey}` }, { status: 400 });
+    // Validate source key against allowlist
+    if (!ALLOWED_SOURCES.includes(sourceKey)) {
+      return NextResponse.json({ 
+        error: `Unknown source: ${sourceKey}`, 
+        allowedSources: ALLOWED_SOURCES 
+      }, { status: 400 });
     }
+
+    const baseUrl = SOURCES[sourceKey];
 
     // Reconstruct the remaining path
     const remainingPath = pathArray.slice(1).join('/');
+    
+    // Validate path doesn't contain dangerous patterns (path traversal, double slashes, etc.)
+    if (remainingPath.includes('..') || remainingPath.includes('//') || remainingPath.startsWith('/')) {
+      return NextResponse.json({ 
+        error: 'Invalid path: path contains dangerous patterns', 
+        details: 'Path traversal and double slashes are not allowed' 
+      }, { status: 400 });
+    }
+    
+    // Additional validation: ensure path segments don't contain control characters or special patterns
+    const dangerousPatterns = /[<>:"|?*\x00-\x1f]/;
+    if (dangerousPatterns.test(remainingPath)) {
+      return NextResponse.json({ 
+        error: 'Invalid path: path contains invalid characters' 
+      }, { status: 400 });
+    }
     
     // Construct the target URL
     const urlObj = new URL(request.url);
@@ -50,7 +75,7 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'No error body');
-      console.error(`Tile fetch error (${response.status}) for ${tileUrl}:`, errorText);
+      logger.error(`Tile fetch error (${response.status}) for ${tileUrl}:`, errorText);
       return NextResponse.json(
         { 
           error: 'Upstream fetch failed', 
@@ -115,7 +140,7 @@ export async function GET(
           },
         });
       } catch (e) {
-        console.error(`Error overriding ${sourceKey} TileJSON:`, e);
+        logger.error(`Error overriding ${sourceKey} TileJSON:`, e);
       }
     }
 
@@ -128,7 +153,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Tile proxy error:', error);
+    logger.error('Tile proxy error:', error);
     return NextResponse.json(
       { 
         error: 'Proxy exception', 

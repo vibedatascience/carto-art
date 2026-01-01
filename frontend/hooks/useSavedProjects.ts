@@ -2,21 +2,43 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { PosterConfig, SavedProject } from '@/types/poster';
+import { safeGetItem, safeSetItem } from '@/lib/storage/safeStorage';
+import { logger } from '@/lib/logger';
 
 const STORAGE_KEY = 'carto-art-saved-projects';
 
+/**
+ * Hook for managing saved poster projects in localStorage.
+ * Provides CRUD operations with error handling for storage failures.
+ * 
+ * @returns Object containing:
+ * - projects: Array of saved projects
+ * - saveProject: Save a new project
+ * - deleteProject: Delete a project by ID
+ * - renameProject: Rename a project
+ * - isLoaded: Whether projects have been loaded from storage
+ * - storageError: Error message if storage operations fail
+ * 
+ * @example
+ * ```tsx
+ * const { projects, saveProject, deleteProject } = useSavedProjects();
+ * saveProject('My Poster', currentConfig);
+ * ```
+ */
 export function useSavedProjects() {
   const [projects, setProjects] = useState<SavedProject[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
 
   // Load projects from localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = safeGetItem(STORAGE_KEY);
     if (stored) {
       try {
         setProjects(JSON.parse(stored));
       } catch (e) {
-        console.error('Failed to parse saved projects', e);
+        logger.error('Failed to parse saved projects', e);
+        setStorageError('Failed to load saved projects');
       }
     }
     setIsLoaded(true);
@@ -25,7 +47,12 @@ export function useSavedProjects() {
   // Save projects to localStorage whenever they change
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+      const success = safeSetItem(STORAGE_KEY, JSON.stringify(projects));
+      if (!success) {
+        setStorageError('Failed to save projects. Storage may be full or unavailable.');
+      } else {
+        setStorageError(null);
+      }
     }
   }, [projects, isLoaded]);
 
@@ -54,7 +81,8 @@ export function useSavedProjects() {
     saveProject,
     deleteProject,
     renameProject,
-    isLoaded
+    isLoaded,
+    storageError
   };
 }
 

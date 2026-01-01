@@ -58,6 +58,7 @@ export const DEFAULT_CONFIG: PosterConfig = {
     contours: false,
     contourDensity: 50,
     population: false,
+    pois: true, // Points of Interest (airports, monuments, etc.)
     labels: false,
     labelSize: 1,
     labelMaxWidth: 10,

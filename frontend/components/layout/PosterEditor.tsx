@@ -10,9 +10,12 @@ import { TextOverlay } from '@/components/map/TextOverlay';
 import { ExportButton } from '@/components/controls/ExportButton';
 import { applyPaletteToStyle } from '@/lib/styles/applyPalette';
 import { throttle, cn } from '@/lib/utils';
+import { THROTTLE } from '@/lib/constants';
 import { getNumericRatio, getAspectRatioCSS } from '@/lib/styles/dimensions';
 import { TabNavigation, type Tab } from './TabNavigation';
 import { ControlDrawer } from './ControlDrawer';
+import { ErrorToastContainer } from '@/components/ui/ErrorToast';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
 import type MapLibreGL from 'maplibre-gl';
 
 export function PosterEditor() {
@@ -41,7 +44,18 @@ export function PosterEditor() {
     renameProject 
   } = useSavedProjects();
 
+  const { errors, handleError, clearError } = useErrorHandler();
+  
   const { isExporting, exportToPNG, setMapRef, fitToLocation, zoomIn, zoomOut } = useMapExport(config);
+  
+  // Wrap exportToPNG to handle errors
+  const handleExport = useCallback(async () => {
+    try {
+      await exportToPNG();
+    } catch (error) {
+      handleError(error);
+    }
+  }, [exportToPNG, handleError]);
 
   const numericRatio = useMemo(() => {
     return getNumericRatio(config.format.aspectRatio, config.format.orientation);
@@ -65,7 +79,7 @@ export function PosterEditor() {
   const throttledUpdateLocation = useMemo(
     () => throttle((center: [number, number], zoom: number) => {
       updateLocation({ center, zoom });
-    }, 60),
+    }, THROTTLE.MAP_MOVE),
     [updateLocation]
   );
 
@@ -91,13 +105,14 @@ export function PosterEditor() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      <ErrorToastContainer errors={errors} onDismiss={clearError} />
       {/* Mobile Header */}
       <div className="md:hidden h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 z-40 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 shadow-lg" />
           <span className="font-bold text-gray-900 dark:text-white">CartoArt</span>
         </div>
-        <ExportButton onExport={exportToPNG} isExporting={isExporting} />
+        <ExportButton onExport={handleExport} isExporting={isExporting} />
       </div>
 
       <TabNavigation 
@@ -160,7 +175,7 @@ export function PosterEditor() {
               <Redo2 className="w-4 h-4" />
             </button>
           </div>
-          <ExportButton onExport={exportToPNG} isExporting={isExporting} />
+          <ExportButton onExport={handleExport} isExporting={isExporting} />
         </div>
 
         {/* Map Canvas */}

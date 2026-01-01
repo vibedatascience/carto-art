@@ -111,6 +111,7 @@ export interface PosterConfig {
     contours: boolean;
     contourDensity: number; // New: control contour line density (interval)
     population: boolean;
+    pois?: boolean; // Toggle for points of interest (airports, monuments, etc.)
     labels: boolean;
     labelSize: number; // New: control map label size
     labelMaxWidth: number; // New: control map label wrap width

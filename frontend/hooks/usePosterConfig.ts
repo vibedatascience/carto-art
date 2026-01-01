@@ -6,6 +6,8 @@ import type { PosterConfig, PosterLocation, PosterStyle, ColorPalette } from '@/
 import { DEFAULT_CONFIG } from '@/lib/config/defaults';
 import { useUserLocation } from './useUserLocation';
 import { encodeConfig, decodeConfig } from '@/lib/config/url-state';
+import { cloneConfig, isConfigEqual } from '@/lib/utils/configComparison';
+import { MAP, HISTORY, TIMEOUTS } from '@/lib/constants';
 
 type PosterAction =
   | { type: 'UPDATE_LOCATION'; payload: Partial<PosterLocation> }
@@ -23,7 +25,7 @@ function posterReducer(state: PosterConfig, action: PosterAction): PosterConfig 
       return action.payload;
     case 'UPDATE_LOCATION':
       const zoom = action.payload.zoom !== undefined 
-        ? Math.min(14.9, Math.max(1, action.payload.zoom))
+        ? Math.min(MAP.MAX_ZOOM_CLAMPED, Math.max(MAP.MIN_ZOOM_CLAMPED, action.payload.zoom))
         : undefined;
       return {
         ...state,
@@ -38,7 +40,7 @@ function posterReducer(state: PosterConfig, action: PosterAction): PosterConfig 
         ...state,
         location: {
           ...action.payload,
-          zoom: Math.min(14.9, Math.max(1, action.payload.zoom))
+          zoom: Math.min(MAP.MAX_ZOOM_CLAMPED, Math.max(MAP.MIN_ZOOM_CLAMPED, action.payload.zoom))
         },
       };
     case 'UPDATE_STYLE':
@@ -74,8 +76,30 @@ function posterReducer(state: PosterConfig, action: PosterAction): PosterConfig 
   }
 }
 
-const MAX_HISTORY_SIZE = 50;
-
+/**
+ * Main hook for managing poster configuration state.
+ * Handles state management, URL synchronization, undo/redo history, and auto-location.
+ * 
+ * @returns Object containing:
+ * - config: Current poster configuration
+ * - updateLocation: Update location (center, zoom, bounds)
+ * - updateStyle: Change map style
+ * - updatePalette: Change color palette
+ * - updateTypography: Update typography settings
+ * - updateFormat: Update format/aspect ratio settings
+ * - updateLayers: Toggle map layers
+ * - setConfig: Replace entire config (used for loading saved projects)
+ * - undo: Undo last change
+ * - redo: Redo last undone change
+ * - canUndo: Whether undo is available
+ * - canRedo: Whether redo is available
+ * 
+ * @example
+ * ```tsx
+ * const { config, updateLocation, updateStyle } = usePosterConfig();
+ * updateLocation({ center: [lng, lat], zoom: 10 });
+ * ```
+ */
 export function usePosterConfig() {
   const router = useRouter();
   const pathname = usePathname();
@@ -84,6 +108,8 @@ export function usePosterConfig() {
   const historyRef = useRef<PosterConfig[]>([]);
   const historyIndexRef = useRef(-1);
   const isUndoRedoRef = useRef(false);
+  const isUpdatingUrlRef = useRef(false);
+  const urlUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [config, dispatch] = useReducer(posterReducer, DEFAULT_CONFIG);
   const [shouldAutoLocate, setShouldAutoLocate] = useState(() => !searchParams.has('s'));
@@ -103,45 +129,96 @@ export function usePosterConfig() {
     isInitialized.current = true;
   }, [searchParams]);
 
+  // Debounced history update function
+  const pendingHistoryUpdateRef = useRef<NodeJS.Timeout | null>(null);
+  const lastConfigRef = useRef<PosterConfig | null>(null);
+
   // Add to history when config changes (but not during undo/redo)
+  // Debounced to avoid adding history on every rapid change
   useEffect(() => {
     if (!isInitialized.current || isUndoRedoRef.current) {
       isUndoRedoRef.current = false;
       return;
     }
 
-    // Don't add duplicate states
-    const lastState = historyRef.current[historyIndexRef.current];
-    if (lastState && JSON.stringify(lastState) === JSON.stringify(config)) {
-      return;
+    // Clear any pending history update
+    if (pendingHistoryUpdateRef.current) {
+      clearTimeout(pendingHistoryUpdateRef.current);
+      pendingHistoryUpdateRef.current = null;
     }
 
-    // Remove any states after current index (when undoing and then making a new change)
-    historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+    // Store current config for debounced update
+    lastConfigRef.current = config;
 
-    // Add new state
-    historyRef.current.push(JSON.parse(JSON.stringify(config)));
-    historyIndexRef.current = historyRef.current.length - 1;
+    // Debounce history updates (500ms of inactivity)
+    pendingHistoryUpdateRef.current = setTimeout(() => {
+      const configToSave = lastConfigRef.current;
+      if (!configToSave) return;
 
-    // Limit history size
-    if (historyRef.current.length > MAX_HISTORY_SIZE) {
-      historyRef.current.shift();
-      historyIndexRef.current = MAX_HISTORY_SIZE - 1;
-    }
+      // Don't add duplicate states using optimized comparison
+      const lastState = historyRef.current[historyIndexRef.current];
+      if (lastState && isConfigEqual(lastState, configToSave)) {
+        return;
+      }
+
+      // Remove any states after current index (when undoing and then making a new change)
+      historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+
+      // Add new state using optimized clone
+      historyRef.current.push(cloneConfig(configToSave));
+      historyIndexRef.current = historyRef.current.length - 1;
+
+      // Limit history size
+      if (historyRef.current.length > HISTORY.MAX_SIZE) {
+        historyRef.current.shift();
+        historyIndexRef.current = HISTORY.MAX_SIZE - 1;
+      }
+    }, TIMEOUTS.HISTORY_UPDATE_DEBOUNCE);
+
+    // Cleanup timeout on unmount or config change
+    return () => {
+      if (pendingHistoryUpdateRef.current) {
+        clearTimeout(pendingHistoryUpdateRef.current);
+        pendingHistoryUpdateRef.current = null;
+      }
+    };
   }, [config]);
 
-  // Sync state to URL
+  // Sync state to URL (debounced to prevent race conditions)
   useEffect(() => {
-    if (!isInitialized.current) return;
+    if (!isInitialized.current || isUpdatingUrlRef.current) return;
 
-    const encoded = encodeConfig(config);
-    const params = new URLSearchParams(searchParams.toString());
-    
-    // Only update if the encoded state is different from what's in the URL
-    if (params.get('s') !== encoded) {
-      params.set('s', encoded);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    // Clear any pending URL update
+    if (urlUpdateTimeoutRef.current) {
+      clearTimeout(urlUpdateTimeoutRef.current);
+      urlUpdateTimeoutRef.current = null;
     }
+
+    // Debounce URL updates to prevent infinite loops
+    urlUpdateTimeoutRef.current = setTimeout(() => {
+      const encoded = encodeConfig(config);
+      const params = new URLSearchParams(searchParams.toString());
+      
+      // Only update if the encoded state is different from what's in the URL
+      if (params.get('s') !== encoded) {
+        isUpdatingUrlRef.current = true;
+        params.set('s', encoded);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        
+        // Reset flag after a short delay to allow router to update
+        setTimeout(() => {
+          isUpdatingUrlRef.current = false;
+        }, TIMEOUTS.URL_UPDATE_RESET);
+      }
+        }, TIMEOUTS.URL_SYNC_DEBOUNCE);
+
+    // Cleanup timeout on unmount or config change
+    return () => {
+      if (urlUpdateTimeoutRef.current) {
+        clearTimeout(urlUpdateTimeoutRef.current);
+        urlUpdateTimeoutRef.current = null;
+      }
+    };
   }, [config, pathname, router, searchParams]);
 
   const setConfig = useCallback((config: PosterConfig) => {
@@ -188,7 +265,7 @@ export function usePosterConfig() {
     if (historyIndexRef.current > 0) {
       historyIndexRef.current--;
       isUndoRedoRef.current = true;
-      dispatch({ type: 'SET_CONFIG', payload: JSON.parse(JSON.stringify(historyRef.current[historyIndexRef.current])) });
+      dispatch({ type: 'SET_CONFIG', payload: cloneConfig(historyRef.current[historyIndexRef.current]) });
       setShouldAutoLocate(false);
     }
   }, []);
@@ -197,7 +274,7 @@ export function usePosterConfig() {
     if (historyIndexRef.current < historyRef.current.length - 1) {
       historyIndexRef.current++;
       isUndoRedoRef.current = true;
-      dispatch({ type: 'SET_CONFIG', payload: JSON.parse(JSON.stringify(historyRef.current[historyIndexRef.current])) });
+      dispatch({ type: 'SET_CONFIG', payload: cloneConfig(historyRef.current[historyIndexRef.current]) });
       setShouldAutoLocate(false);
     }
   }, []);

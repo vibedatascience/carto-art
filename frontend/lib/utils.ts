@@ -1,12 +1,32 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+/**
+ * Utility function to merge Tailwind CSS classes with clsx and tailwind-merge.
+ * Handles conditional classes and resolves conflicts using Tailwind's class precedence.
+ * 
+ * @param inputs - Class values (strings, objects, arrays, or undefined/null)
+ * @returns Merged class string
+ * 
+ * @example
+ * ```tsx
+ * cn('px-4', isActive && 'bg-blue-500', { 'text-white': isDark })
+ * ```
+ */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 /**
- * Formats coordinates into a pretty string (e.g. 37.77° N, 122.42° W)
+ * Formats coordinates into a human-readable string with direction indicators.
+ * 
+ * @param center - Tuple of [longitude, latitude] coordinates
+ * @returns Formatted string like "37.77° N, 122.42° W"
+ * 
+ * @example
+ * ```ts
+ * formatCoordinates([-122.42, 37.77]) // "37.77° N, 122.42° W"
+ * ```
  */
 export function formatCoordinates(center: [number, number]): string {
   const [lon, lat] = center;
@@ -16,7 +36,18 @@ export function formatCoordinates(center: [number, number]): string {
 }
 
 /**
- * Converts a hex color string to rgba() format
+ * Converts a hex color string to rgba() CSS format.
+ * Supports both 3-digit and 6-digit hex colors.
+ * 
+ * @param hex - Hex color string (e.g., "#ff0000" or "#f00")
+ * @param alpha - Alpha value between 0 and 1
+ * @returns RGBA CSS string (e.g., "rgba(255, 0, 0, 0.5)")
+ * 
+ * @example
+ * ```ts
+ * hexToRgba('#ff0000', 0.5) // "rgba(255, 0, 0, 0.5)"
+ * hexToRgba('#f00', 1) // "rgba(255, 0, 0, 1)"
+ * ```
  */
 export function hexToRgba(hex: string, alpha: number): string {
   const normalized = hex.trim();
@@ -43,8 +74,17 @@ export function hexToRgba(hex: string, alpha: number): string {
 }
 
 /**
- * Basic luminance check to see if a color is dark.
- * Returns true if the color is dark, false if it's light.
+ * Determines if a hex color is dark using ITU-R BT.709 luminance formula.
+ * Useful for choosing appropriate text colors on colored backgrounds.
+ * 
+ * @param hex - Hex color string (e.g., "#000000" or "#fff")
+ * @returns true if the color is dark (luminance < 0.5), false if light
+ * 
+ * @example
+ * ```ts
+ * isColorDark('#000000') // true
+ * isColorDark('#ffffff') // false
+ * ```
  */
 export function isColorDark(hex: string): boolean {
   const normalized = hex.trim();
@@ -71,7 +111,18 @@ export function isColorDark(hex: string): boolean {
 }
 
 /**
- * Throttles a function to run at most once every wait milliseconds
+ * Throttles a function to execute at most once per specified time interval.
+ * Useful for limiting the rate of expensive operations like map updates.
+ * 
+ * @param func - Function to throttle
+ * @param wait - Minimum milliseconds between function calls
+ * @returns Throttled function
+ * 
+ * @example
+ * ```ts
+ * const throttledUpdate = throttle(updateMap, 60);
+ * // updateMap will be called at most once every 60ms
+ * ```
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
@@ -84,5 +135,35 @@ export function throttle<T extends (...args: any[]) => any>(
       previous = now;
       func.apply(this, args);
     }
+  };
+}
+
+/**
+ * Debounces a function to execute only after the specified delay has passed
+ * since the last invocation. Useful for search inputs and other user-triggered events.
+ * 
+ * @param func - Function to debounce
+ * @param wait - Milliseconds to wait after last call before executing
+ * @returns Debounced function
+ * 
+ * @example
+ * ```ts
+ * const debouncedSearch = debounce(performSearch, 300);
+ * // performSearch will only run 300ms after user stops typing
+ * ```
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout | null = null;
+  return function(this: any, ...args: Parameters<T>) {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+      timeoutId = null;
+    }, wait);
   };
 }

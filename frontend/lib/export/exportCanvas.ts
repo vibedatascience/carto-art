@@ -4,6 +4,7 @@ import { DEFAULT_EXPORT_RESOLUTION } from './constants';
 import { calculateTargetResolution } from './resolution';
 import { drawMarker, applyTexture, drawCompassRose } from './drawing';
 import { drawTextOverlay } from './text-overlay';
+import { logger } from '@/lib/logger';
 
 interface ExportOptions {
   map: MapLibreGL.Map;
@@ -34,7 +35,7 @@ export async function exportMapToPNG(options: ExportOptions): Promise<Blob> {
     ];
     await Promise.all(fontsToLoad.map(font => document.fonts.load(font)));
   } catch (e) {
-    console.warn('Failed to load fonts for export, falling back to system fonts:', e);
+    logger.warn('Failed to load fonts for export, falling back to system fonts:', e);
   }
 
   // 2. GATHER DIMENSIONS & SCALING

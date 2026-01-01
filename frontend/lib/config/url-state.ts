@@ -1,6 +1,7 @@
 import LZString from 'lz-string';
 import { PosterConfig } from '@/types/poster';
 import { getStyleById } from '@/lib/styles';
+import { logger } from '@/lib/logger';
 
 /**
  * Encodes a config object into a compressed URL-safe string.
@@ -20,7 +21,7 @@ export function encodeConfig(config: PosterConfig): string {
     const json = JSON.stringify(compact);
     return LZString.compressToEncodedURIComponent(json);
   } catch (e) {
-    console.error('Failed to encode config', e);
+    logger.error('Failed to encode config', e);
     return '';
   }
 }
@@ -50,7 +51,7 @@ export function decodeConfig(encoded: string): Partial<PosterConfig> | null {
       layers: data.ly,
     };
   } catch (e) {
-    console.error('Failed to decode config', e);
+    logger.error('Failed to decode config', e);
     return null;
   }
 }

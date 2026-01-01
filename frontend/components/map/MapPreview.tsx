@@ -6,6 +6,8 @@ import { Loader2 } from 'lucide-react';
 import type { PosterLocation, LayerToggle, PosterConfig } from '@/types/poster';
 import { cn } from '@/lib/utils';
 import { MarkerIcon } from './MarkerIcon';
+import { MAP, TIMEOUTS, TEXTURE } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 interface MapPreviewProps {
@@ -32,6 +34,12 @@ export function MapPreview({
 }: MapPreviewProps) {
   const mapRef = useRef<MapRef>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Store event handler references and timeout IDs for cleanup
+  const loadingHandlerRef = useRef<(() => void) | null>(null);
+  const idleHandlerRef = useRef<(() => void) | null>(null);
+  const timeoutHandlerRef = useRef<(() => void) | null>(null);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
 
   // Local viewState for smooth interaction without triggering full app re-renders on every frame
   const [viewState, setViewState] = useState({
@@ -55,19 +63,116 @@ export function MapPreview({
       const map = mapRef.current.getMap();
       onMapLoad(map);
 
-      // Setup loading listeners
-      map.on('dataloading', () => setIsLoading(true));
-      map.on('idle', () => setIsLoading(false));
+      // Debug: Check for aeroway and POI data
+      console.log('🛫 [POI/AEROWAY CHECK] Starting check...');
+      map.once('idle', () => {
+        console.log('🛫 [POI/AEROWAY CHECK] Map is idle, checking data...');
+        try {
+          const aerowayFeatures = map.querySourceFeatures('openmaptiles', {
+            sourceLayer: 'aeroway'
+          });
+          const aerodromeFeatures = map.querySourceFeatures('openmaptiles', {
+            sourceLayer: 'aerodrome_label'
+          });
+          const poiFeatures = map.querySourceFeatures('openmaptiles', {
+            sourceLayer: 'poi'
+          });
+
+           console.log('🛫 [POI/AEROWAY CHECK] Data in tiles:', {
+             aerowayCount: aerowayFeatures.length,
+             aerodromeCount: aerodromeFeatures.length,
+             poiCount: poiFeatures.length,
+             aerowayClasses: aerowayFeatures.length > 0 ? [...new Set(aerowayFeatures.map((f: any) => f.properties?.class))] : 'no data',
+             poiClasses: poiFeatures.length > 0 ? [...new Set(poiFeatures.slice(0, 20).map((f: any) => f.properties?.class))] : 'no data',
+             sampleAerodrome: aerodromeFeatures[0]?.properties,
+             samplePOI: poiFeatures[0]?.properties,
+             zoom: map.getZoom().toFixed(2)
+           });
+
+           // Check if layers exist and are visible
+           const layerCheck = ['aeroway-area', 'aeroway-runway', 'aerodrome-label', 'poi-symbol', 'poi-label'].map(id => {
+             const layer = map.getLayer(id);
+             return {
+               id,
+               exists: !!layer,
+               visibility: layer ? (layer as any).layout?.visibility : 'n/a'
+             };
+           });
+           console.log('🛫 [POI/AEROWAY CHECK] Layer status:', layerCheck);
+         } catch (err) {
+           console.error('🛫 [POI/AEROWAY CHECK] Error:', err);
+        }
+      });
+
+      // Create named handler functions for proper cleanup
+      const loadingHandler = () => setIsLoading(true);
+      const idleHandler = () => {
+        setIsLoading(false);
+        // Clear any pending timeout when map becomes idle
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
+      };
       
       // Safety timeout: if we're still "loading" after 10 seconds, clear it
       // This prevents being stuck on "Loading Tiles" if some tiles fail silently
-      map.on('dataloading', () => {
-        const timeoutId = setTimeout(() => setIsLoading(false), 10000);
-        map.once('idle', () => clearTimeout(timeoutId));
-      });
+      const timeoutHandler = () => {
+        // Clear any existing timeout
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+        }
+        // Set new timeout
+        timeoutIdRef.current = setTimeout(() => setIsLoading(false), TIMEOUTS.MAP_LOADING);
+        // Clear timeout when map becomes idle
+        map.once('idle', () => {
+          if (timeoutIdRef.current) {
+            clearTimeout(timeoutIdRef.current);
+            timeoutIdRef.current = null;
+          }
+        });
+      };
 
+      // Store handler references
+      loadingHandlerRef.current = loadingHandler;
+      idleHandlerRef.current = idleHandler;
+      timeoutHandlerRef.current = timeoutHandler;
+
+      // Setup loading listeners
+      map.on('dataloading', loadingHandler);
+      map.on('idle', idleHandler);
+      map.on('dataloading', timeoutHandler);
     }
   }, [onMapLoad]);
+
+  // Cleanup event listeners and timeouts when component unmounts or map changes
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        const map = mapRef.current.getMap();
+        
+        // Remove event listeners
+        if (loadingHandlerRef.current) {
+          map.off('dataloading', loadingHandlerRef.current);
+          loadingHandlerRef.current = null;
+        }
+        if (idleHandlerRef.current) {
+          map.off('idle', idleHandlerRef.current);
+          idleHandlerRef.current = null;
+        }
+        if (timeoutHandlerRef.current) {
+          map.off('dataloading', timeoutHandlerRef.current);
+          timeoutHandlerRef.current = null;
+        }
+        
+        // Clear any pending timeouts
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
+      }
+    };
+  }, [mapStyle]); // Re-run cleanup when map style changes (new map instance)
 
   const handleMove = useCallback((evt: any) => {
     setViewState(evt.viewState);
@@ -80,7 +185,7 @@ export function MapPreview({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleError = useCallback((e: any) => {
-    console.error('MapLibre error details:', {
+    logger.error('MapLibre error details:', {
       message: e.error?.message || e.message || 'Unknown map error',
       error: e.error,
       originalEvent: e
@@ -137,9 +242,9 @@ export function MapPreview({
         onMoveEnd={handleMove}
         onError={handleError}
         antialias={true}
-        pixelRatio={2}
-        maxZoom={14}
-        minZoom={1}
+        pixelRatio={MAP.PIXEL_RATIO}
+        maxZoom={MAP.MAX_ZOOM}
+        minZoom={MAP.MIN_ZOOM}
       >
       {showMarker && (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
@@ -182,7 +287,7 @@ export function MapPreview({
           className="absolute inset-0 pointer-events-none z-20 mix-blend-multiply"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-            opacity: (format.textureIntensity || 20) / 100,
+            opacity: (format.textureIntensity || TEXTURE.DEFAULT_INTENSITY) / 100,
             filter: format.texture === 'canvas' ? 'contrast(120%) brightness(110%)' : 'none'
           }}
         />

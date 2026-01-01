@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { CACHE, GEOCODING, API } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
-const MIN_QUERY_LEN = 3;
-const MAX_QUERY_LEN = 200;
-const DEFAULT_LIMIT = 5;
-const MAX_LIMIT = 10;
+// Use require for lru-cache to work around Next.js/Turbopack ESM module resolution issues
+const { LRUCache } = require('lru-cache');
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const CACHE_SIZE_LIMIT = 1000;
-const cache = new Map<string, { expiresAt: number; payload: unknown }>();
+// Use LRU cache for better eviction strategy and automatic TTL management
+const cache = new LRUCache<string, unknown>({
+  max: CACHE.SIZE_LIMIT,
+  ttl: CACHE.TTL_MS,
+});
 
 /**
  * Rate limiting: Nominatim policy is ~1 request per second.
  * We use a serialized queue to ensure we don't hit the API too fast from this instance.
  */
-const MIN_REQUEST_INTERVAL_MS = 1000;
 let lastRequestTime = 0;
 let queue: Promise<unknown> = Promise.resolve();
 
@@ -26,7 +27,7 @@ function sleep(ms: number) {
 function enqueue<T>(task: () => Promise<T>): Promise<T> {
   const run = async () => {
     const now = Date.now();
-    const wait = Math.max(0, MIN_REQUEST_INTERVAL_MS - (now - lastRequestTime));
+    const wait = Math.max(0, API.MIN_REQUEST_INTERVAL_MS - (now - lastRequestTime));
     if (wait) await sleep(wait);
     lastRequestTime = Date.now();
     return task();
@@ -38,20 +39,11 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
 }
 
 function getFromCache(key: string) {
-  const cached = cache.get(key);
-  if (cached && cached.expiresAt > Date.now()) {
-    return cached.payload;
-  }
-  if (cached) cache.delete(key);
-  return null;
+  return cache.get(key) ?? null;
 }
 
 function setToCache(key: string, payload: unknown) {
-  if (cache.size >= CACHE_SIZE_LIMIT) {
-    const firstKey = cache.keys().next().value;
-    if (firstKey) cache.delete(firstKey);
-  }
-  cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, payload });
+  cache.set(key, payload);
 }
 
 async function fetchFromNominatim(endpoint: 'search' | 'reverse', params: URLSearchParams) {
@@ -124,17 +116,17 @@ export async function GET(request: NextRequest) {
     // Forward Geocoding
     const q = qRaw.replace(/\s+/g, ' ');
 
-    if (!q || q.length < MIN_QUERY_LEN) {
+    if (!q || q.length < GEOCODING.MIN_QUERY_LEN) {
       return NextResponse.json([], { headers: { 'Cache-Control': 'no-store' } });
     }
-    if (q.length > MAX_QUERY_LEN) {
+    if (q.length > GEOCODING.MAX_QUERY_LEN) {
       return NextResponse.json({ error: 'Query too long' }, { status: 400 });
     }
 
-    const limitParam = Number(url.searchParams.get('limit') ?? DEFAULT_LIMIT);
+    const limitParam = Number(url.searchParams.get('limit') ?? GEOCODING.DEFAULT_LIMIT);
     const limit = Number.isFinite(limitParam)
-      ? Math.min(Math.max(1, limitParam), MAX_LIMIT)
-      : DEFAULT_LIMIT;
+      ? Math.min(Math.max(1, limitParam), GEOCODING.MAX_LIMIT)
+      : GEOCODING.DEFAULT_LIMIT;
 
     const cacheKey = `search:${q.toLowerCase()}:${limit}`;
     const cached = getFromCache(cacheKey);
@@ -163,7 +155,7 @@ export async function GET(request: NextRequest) {
       headers: { 'Cache-Control': 'public, max-age=300' },
     });
   } catch (error) {
-    console.error('Unhandled geocode API error:', error);
+    logger.error('Unhandled geocode API error:', error);
     return NextResponse.json(
       { 
         error: 'Internal Server Error', 
