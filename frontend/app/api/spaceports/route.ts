@@ -6,10 +6,10 @@ export const runtime = 'nodejs';
 
 // Use require for lru-cache to work around Next.js/Turbopack ESM module resolution issues
 import type { LRUCache } from 'lru-cache';
-const LRUCacheConstructor = require('lru-cache').LRUCache as new <K, V>(options?: any) => LRUCache<K, V>;
+const LRUCacheConstructor = require('lru-cache').LRUCache as new (options?: any) => LRUCache<string, any>;
 
 // Use LRU cache for spaceports data (7-day TTL since spaceports change infrequently)
-const cache = new LRUCacheConstructor<string, unknown>({
+const cache = new LRUCacheConstructor({
   max: 10, // Only need to cache one response
   ttl: SPACEPORTS_CACHE.TTL_MS,
 });

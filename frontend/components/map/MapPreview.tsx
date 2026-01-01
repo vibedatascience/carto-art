@@ -89,6 +89,14 @@ export function MapPreview({
             console.warn('🚀 [SPACEPORT DEBUG] Could not query spaceports source (may not be loaded yet):', err);
           }
 
+          // Test which labels would pass the filter (used in multiple places)
+          const filterTest = (name: string): boolean => {
+            const lowerName = (name || '').toLowerCase();
+            return lowerName.includes('space center') || 
+                   lowerName.includes('spaceport') || 
+                   lowerName.includes('ksc');
+          };
+
           console.log('🚀 [SPACEPORT DEBUG] Spaceport data from sources:', {
             spaceportAreaCount: spaceportAreas.length,
             spaceportLabelCount: spaceportLabels.length,
@@ -138,6 +146,7 @@ export function MapPreview({
               layout: {
                 'text-field': (spaceportLabelLayer as any).layout?.['text-field'],
                 'text-allow-overlap': (spaceportLabelLayer as any).layout?.['text-allow-overlap'],
+                'text-ignore-placement': (spaceportLabelLayer as any).layout?.['text-ignore-placement'],
                 'text-optional': (spaceportLabelLayer as any).layout?.['text-optional'],
                 'text-size': (spaceportLabelLayer as any).layout?.['text-size']
               }
@@ -155,10 +164,57 @@ export function MapPreview({
               suggestion: 'Labels should come from Launch Library API GeoJSON source. Check if source is loaded.'
             });
           } else if (spaceportLabels.length > 0) {
+            const currentZoom = map.getZoom();
+            const spaceportSource = map.getSource('spaceports');
+            const sourceLoaded = spaceportSource && (spaceportSource as any).loaded;
+
             console.log('🚀 [SPACEPORT DEBUG] ✓ Found spaceport labels from GeoJSON source!', {
               labelCount: spaceportLabels.length,
-              sampleLabels: spaceportLabels.slice(0, 5).map((f: any) => f.properties?.name)
+              currentZoom: currentZoom.toFixed(2),
+              minzoomForLabels: 8,
+              zoomAboveMin: currentZoom >= 8,
+              sourceLoaded: sourceLoaded,
+              sampleLabels: spaceportLabels.slice(0, 10).map((f: any) => ({
+                name: f.properties?.name,
+                location: f.properties?.location,
+                wouldPassFilter: filterTest(f.properties?.name || ''),
+                inViewport: (() => {
+                  const [lon, lat] = f.geometry.coordinates;
+                  const bounds = map.getBounds();
+                  return bounds.contains([lon, lat]);
+                })()
+              })),
+              visibleInViewport: spaceportLabels.filter((f: any) => {
+                const [lon, lat] = f.geometry.coordinates;
+                const bounds = map.getBounds();
+                return bounds.contains([lon, lat]);
+              }).length,
+              labelsPassingFilter: spaceportLabels.filter((f: any) => 
+                filterTest(f.properties?.name || '')
+              ).length,
+              // Show actual layer properties to verify our fixes worked
+              actualLayerProperties: spaceportLabelLayer ? {
+                'text-allow-overlap': (spaceportLabelLayer as any).layout?.['text-allow-overlap'],
+                'text-ignore-placement': (spaceportLabelLayer as any).layout?.['text-ignore-placement'],
+                'text-optional': (spaceportLabelLayer as any).layout?.['text-optional'],
+                'text-padding': (spaceportLabelLayer as any).layout?.['text-padding'],
+                filter: (spaceportLabelLayer as any).filter,
+                minzoom: (spaceportLabelLayer as any).minzoom
+              } : null
             });
+            
+            // Check if labels are being hidden due to collision detection
+            if (spaceportLabelLayer) {
+              const allowOverlap = (spaceportLabelLayer as any).layout?.['text-allow-overlap'];
+              const ignorePlacement = (spaceportLabelLayer as any).layout?.['text-ignore-placement'];
+              if ((allowOverlap === false || ignorePlacement === false) && currentZoom >= 8) {
+                console.warn('🚀 [SPACEPORT DEBUG] ⚠️ Labels may be hidden due to collision detection!', {
+                  'text-allow-overlap': allowOverlap,
+                  'text-ignore-placement': ignorePlacement,
+                  suggestion: 'Ensure text-allow-overlap and text-ignore-placement are both true'
+                });
+              }
+            }
           }
 
           // General layer check
@@ -171,6 +227,63 @@ export function MapPreview({
             };
           });
           console.log('🚀 [SPACEPORT DEBUG] All POI-related layer status:', layerCheck);
+
+          // Test if the layer is actually rendering features
+          if (spaceportLabelLayer) {
+            try {
+              // Query rendered features from the layer (what's actually being drawn)
+              const renderedFeatures = map.queryRenderedFeatures(undefined, {
+                layers: ['spaceport-label']
+              });
+              
+              // Test if we can query features at specific points
+              const testPoints = spaceportLabels.slice(0, 5).map((f: any) => {
+                const [lon, lat] = f.geometry.coordinates;
+                const bounds = map.getBounds();
+                const inViewport = bounds.contains([lon, lat]);
+                let featuresAtPoint: any[] = [];
+                
+                if (inViewport) {
+                  try {
+                    // Convert lat/lon to pixel coordinates
+                    const point = map.project([lon, lat]);
+                    featuresAtPoint = map.queryRenderedFeatures([point.x, point.y], {
+                      layers: ['spaceport-label']
+                    });
+                  } catch (err) {
+                    // Point might be outside viewport
+                  }
+                }
+                
+                return {
+                  name: f.properties?.name,
+                  coordinates: [lon, lat],
+                  inViewport,
+                  featuresAtPointCount: featuresAtPoint.length,
+                  wouldPassFilter: filterTest(f.properties?.name || '')
+                };
+              });
+              
+              console.log('🚀 [SPACEPORT DEBUG] Layer rendering test:', {
+                renderedFeatureCount: renderedFeatures.length,
+                renderedFeatures: renderedFeatures.slice(0, 5).map((f: any) => ({
+                  id: f.id,
+                  properties: f.properties,
+                  geometry: f.geometry?.type
+                })),
+                viewportBounds: map.getBounds().toArray(),
+                testPoints,
+                // Check source data directly
+                sourceDataCount: spaceportLabels.length,
+                sourceDataInViewport: spaceportLabels.filter((f: any) => {
+                  const [lon, lat] = f.geometry.coordinates;
+                  return map.getBounds().contains([lon, lat]);
+                }).length
+              });
+            } catch (err) {
+              console.error('🚀 [SPACEPORT DEBUG] Error querying rendered features:', err);
+            }
+          }
         } catch (err) {
           logger.error('🚀 [SPACEPORT DEBUG] Error checking spaceport data:', err);
         }

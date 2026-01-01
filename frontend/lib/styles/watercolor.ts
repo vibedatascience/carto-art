@@ -199,14 +199,13 @@ export const watercolorStyle: PosterStyle = buildStyle({
       hillshadeAccentColor: defaultPalette.secondary,
     },
     roads: {
-      roadServiceMinZoom: 10,
-      roadResidentialMinZoom: 8,
-      roadLayout: { 'line-cap': 'round', 'line-join': 'round' },
+      lineCap: 'round',
+      lineJoin: 'round',
     },
     labels: {
-      countryTextSize: [2, 10, 6, 18],
-      stateTextSize: [3, 9, 8, 16],
-      cityTextSize: [4, 8, 12, 14],
+      countrySize: [2, 10, 6, 18],
+      stateSize: [3, 9, 8, 16],
+      citySize: [4, 8, 12, 14],
     },
   },
 });

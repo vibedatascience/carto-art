@@ -566,9 +566,14 @@ function updateRoadLayer(layer: any, palette: ColorPalette, labelAdjustment: num
 }
 
 function updateLayerLayout(layer: any, layers: PosterConfig['layers'] | undefined) {
-  const { type } = layer;
+  const { type, id } = layer;
 
   if (type === 'symbol') {
+    // Don't override spaceport label settings - they need special collision handling
+    if (id === 'spaceport-label') {
+      return; // Skip this layer to preserve its custom layout settings
+    }
+
     if (layers?.labelMaxWidth) {
       layer.layout = {
         ...layer.layout,

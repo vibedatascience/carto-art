@@ -186,25 +186,15 @@ export const topographicStyle: PosterStyle = buildStyle({
       hillshadeShadowColor: '#000000',
       hillshadeHighlightColor: '#FFFFFF',
       hillshadeAccentColor: '#000000',
-      contourLineWidth: 0.5,
-      contourLineOpacity: 0.4,
-      contourIndexLineWidth: 0.8,
-      contourIndexLineOpacity: 0.65,
-      contourLabelMinZoom: 11,
+      contourStyle: 'detailed', // Use detailed contours (regular + index + labels)
     },
     labels: {
-      countryTextSize: [2, 10, 6, 16],
-      stateTextSize: [3, 9, 8, 14],
-      cityTextSize: [4, 8, 12, 12],
-      countryTextHaloWidth: 2.5,
-      countryTextHaloBlur: 1.0,
-      stateTextHaloWidth: 2.5,
-      stateTextHaloBlur: 1.0,
-      cityTextHaloWidth: 1.5,
-      cityTextHaloBlur: 0.5,
+      countrySize: [2, 10, 6, 16],
+      stateSize: [3, 9, 8, 14],
+      citySize: [4, 8, 12, 12],
+      style: 'strong', // Use 'strong' style for thicker halos
     },
     poi: {
-      aerodromeLabelTextField: ['concat', '✈ ', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]],
       // All GeoJSON features are spaceports by definition, so filter by name matching
       // Updated to use 'name' property (GeoJSON doesn't have 'class', 'name:en', or 'name:latin')
       spaceportLabelFilter: [
@@ -213,7 +203,6 @@ export const topographicStyle: PosterStyle = buildStyle({
         ['>=', ['index-of', ['downcase', ['get', 'name']], 'spaceport'], 0],
         ['>=', ['index-of', ['downcase', ['get', 'name']], 'ksc'], 0],
       ],
-      spaceportLabelTextField: ['concat', '🚀 ', ['coalesce', ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']]],
     },
     layerToggles: {
       customLayerIds: {

@@ -9,7 +9,7 @@ import type { LRUCache } from 'lru-cache';
 const LRUCacheConstructor = require('lru-cache').LRUCache as new (options?: any) => LRUCache<string, any>;
 
 // Use LRU cache for better eviction strategy and automatic TTL management
-const cache = new LRUCacheConstructor<string, any>({
+const cache = new LRUCacheConstructor({
   max: CACHE.SIZE_LIMIT,
   ttl: CACHE.TTL_MS,
 });

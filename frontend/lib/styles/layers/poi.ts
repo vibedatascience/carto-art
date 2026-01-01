@@ -169,16 +169,17 @@ export function createPOILayers(
       id: 'spaceport-label',
       type: 'symbol',
       source: 'spaceports',  // Changed to use GeoJSON source from Launch Library API
-      minzoom: 10,
+      minzoom: 8, // Lowered from 10 to 8 to show labels at lower zoom levels
       ...(spaceportLabelFilter ? { filter: spaceportLabelFilter } : {}), // Only add filter if custom filter provided
       layout: {
         'text-field': ['concat', '🚀 ', ['coalesce', ['get', 'name']]],
         'text-font': ['Noto Sans Regular'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 9, 14, 12],
-        'text-padding': 5,
+        'text-size': ['interpolate', ['linear'], ['zoom'], 8, 8, 10, 9, 14, 12], // Adjusted for new minzoom
+        'text-padding': 2, // Reduced padding to allow more labels to show
         'text-anchor': 'top',
         'text-offset': [0, 0.5],
-        'text-allow-overlap': false,
+        'text-allow-overlap': true, // Changed to true so labels show even when overlapping
+        'text-ignore-placement': true, // Ignore placement conflicts with other symbols to ensure labels display
         'text-optional': false,
       },
       paint: {

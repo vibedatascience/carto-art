@@ -146,15 +146,10 @@ export const abstractStyle: PosterStyle = buildStyle({
       hillshadeAccentColor: '#000000',
     },
     labels: {
-      countryTextSize: [2, 14, 6, 22],
-      stateTextSize: [3, 13, 8, 20],
-      cityTextSize: [4, 12, 12, 19],
-      countryTextHaloWidth: 3,
-      countryTextHaloBlur: 1,
-      stateTextHaloWidth: 3,
-      stateTextHaloBlur: 1,
-      cityTextHaloWidth: 2.5,
-      cityTextHaloBlur: 1,
+      countrySize: [2, 14, 6, 22],
+      stateSize: [3, 13, 8, 20],
+      citySize: [4, 12, 12, 19],
+      style: 'strong', // Use 'strong' style for thicker halos (width: 3, blur: 1)
     },
     poi: {
       // All GeoJSON features are spaceports by definition, so filter by name matching
