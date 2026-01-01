@@ -112,24 +112,42 @@ export function ControlDrawer({
           </div>
         )}
 
-        {activeTab === 'map' && (
-          <div className="space-y-8">
-            <div className="space-y-4">
+        {activeTab === 'location' && (
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Search Location
+              </h3>
               <LocationSearch
                 onLocationSelect={updateLocation}
                 currentLocation={config.location}
               />
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-xs text-blue-800 dark:text-blue-200">
-                <p>Tip: Drag the map to fine-tune the position.</p>
-              </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-xs text-blue-800 dark:text-blue-200">
+              <p className="font-medium mb-1">Tip: Fine-tune your view</p>
+              <p className="opacity-90">Drag the map to adjust position, or use the zoom controls to get the perfect framing.</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'style' && (
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Map Style
+              </h3>
               <StyleSelector
                 selectedStyleId={config.style.id}
                 onStyleSelect={updateStyle}
                 currentConfig={config}
               />
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Color Palette
+              </h3>
               <ColorControls
                 palette={config.palette}
                 presets={config.style.palettes}
@@ -138,6 +156,9 @@ export function ControlDrawer({
             </div>
 
             <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Layer Visibility
+              </h3>
               <LayerControls
                 layers={config.layers}
                 onLayersChange={updateLayers}
@@ -149,21 +170,31 @@ export function ControlDrawer({
         )}
 
         {activeTab === 'text' && (
-          <div className="space-y-8">
-            <TypographyControls
-              config={config}
-              onTypographyChange={updateTypography}
-              onLocationChange={updateLocation}
-            />
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Typography
+              </h3>
+              <TypographyControls
+                config={config}
+                onTypographyChange={updateTypography}
+                onLocationChange={updateLocation}
+              />
+            </div>
           </div>
         )}
 
         {activeTab === 'frame' && (
           <div className="space-y-6">
-            <FormatControls
-              format={config.format}
-              onFormatChange={updateFormat}
-            />
+            <div className="space-y-4">
+              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Format & Layout
+              </h3>
+              <FormatControls
+                format={config.format}
+                onFormatChange={updateFormat}
+              />
+            </div>
           </div>
         )}
       </div>

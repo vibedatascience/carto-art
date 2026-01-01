@@ -62,6 +62,7 @@ export const DEFAULT_CONFIG: PosterConfig = {
     labelSize: 1,
     labelMaxWidth: 10,
     labelStyle: 'elevated',
+    boundaries: false,
     marker: true,
     markerType: 'crosshair',
     markerColor: undefined, // Default to palette primary

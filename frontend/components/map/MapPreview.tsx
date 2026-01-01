@@ -49,6 +49,43 @@ export function MapPreview({
     });
   }, [location.center, location.zoom]);
 
+  // Debug: Monitor style changes and contour layers
+  useEffect(() => {
+    if (mapRef.current) {
+      const map = mapRef.current.getMap();
+      
+      console.log('[DEBUG MAP] Style changed, checking contour configuration:', {
+        styleName: mapStyle?.name,
+        hasContourSource: !!mapStyle?.sources?.contours,
+        contourSourceUrl: mapStyle?.sources?.contours?.url?.substring(0, 80),
+        contourLayers: mapStyle?.layers?.filter((l: any) => 
+          l.id === 'contours' || l.id.includes('contour')
+        ).map((l: any) => ({
+          id: l.id,
+          source: l.source,
+          sourceLayer: l['source-layer'],
+          visibility: l.layout?.visibility,
+          filter: l.filter
+        }))
+      });
+
+      // Wait for next frame to check if layers are on the map
+      setTimeout(() => {
+        try {
+          const contourLayers = ['contours', 'contours-regular', 'contours-index'].filter(id => 
+            map.getLayer(id)
+          );
+          console.log('[DEBUG MAP] Contour layers on map after style load:', {
+            found: contourLayers.length,
+            layerIds: contourLayers
+          });
+        } catch (err) {
+          console.warn('[DEBUG MAP] Error checking layers:', err);
+        }
+      }, 100);
+    }
+  }, [mapStyle]);
+
   const handleLoad = useCallback(() => {
     if (mapRef.current && onMapLoad) {
       const map = mapRef.current.getMap();
@@ -63,6 +100,264 @@ export function MapPreview({
       map.on('dataloading', () => {
         const timeoutId = setTimeout(() => setIsLoading(false), 10000);
         map.once('idle', () => clearTimeout(timeoutId));
+      });
+
+      // Debug logging for contour source and layers
+      map.on('sourcedataloading', (e: any) => {
+        if (e.sourceId === 'contours') {
+          console.log('[DEBUG MAP] Contour source loading:', {
+            sourceId: e.sourceId,
+            isSourceLoaded: e.isSourceLoaded,
+            tile: e.tile ? {
+              tileID: e.tile.tileID,
+              state: e.tile.state
+            } : null
+          });
+        }
+      });
+
+      map.on('sourcedata', (e: any) => {
+        if (e.sourceId === 'contours') {
+          console.log('[DEBUG MAP] Contour source data loaded:', {
+            sourceId: e.sourceId,
+            dataType: e.dataType,
+            isSourceLoaded: e.isSourceLoaded,
+            tile: e.tile ? {
+              tileID: e.tile.tileID,
+              state: e.tile.state
+            } : null
+          });
+
+          // Try to query features from the source to see if data exists
+          try {
+            const source = map.getSource('contours');
+            if (source && source.type === 'vector') {
+              // FIRST: Query without specifying sourceLayer to see all available layers
+              const allFeaturesAllLayers = map.querySourceFeatures('contours');
+              const uniqueSourceLayers = [...new Set(allFeaturesAllLayers.map((f: any) => f.sourceLayer))];
+
+              console.log('[DEBUG MAP] ⚠️ CRITICAL - Available source-layers in contours source:', {
+                count: allFeaturesAllLayers.length,
+                sourceLayers: uniqueSourceLayers,
+                sampleByLayer: uniqueSourceLayers.slice(0, 5).map(layer => ({
+                  sourceLayer: layer,
+                  sampleFeature: allFeaturesAllLayers.find((f: any) => f.sourceLayer === layer)?.properties
+                }))
+              });
+
+              // Then query WITH sourceLayer 'contour'
+              const allFeatures = map.querySourceFeatures('contours', {
+                sourceLayer: 'contour'
+              });
+
+              console.log('[DEBUG MAP] All contour features (sourceLayer="contour"):', {
+                count: allFeatures.length,
+                sampleFeatures: allFeatures.slice(0, 3).map((f: any) => ({
+                  id: f.id,
+                  properties: f.properties,
+                  propertyKeys: Object.keys(f.properties || {}),
+                  geometry: f.geometry?.type
+                }))
+              });
+
+              // Now query with the elevation filter (MapTiler contours-v2 uses 'elevation' not 'ele')
+              const featuresWithElevation = map.querySourceFeatures('contours', {
+                sourceLayer: 'contour',
+                filter: ['has', 'elevation']
+              });
+
+              console.log('[DEBUG MAP] Contour features with elevation property:', {
+                count: featuresWithElevation.length,
+                sampleFeatures: featuresWithElevation.slice(0, 5).map((f: any) => ({
+                  id: f.id,
+                  properties: f.properties,
+                  geometry: f.geometry?.type
+                }))
+              });
+
+              // Check what elevation values exist (try multiple property names)
+              const propertyNames = ['ele', 'elevation', 'ELE', 'ELEVATION', 'height'];
+              let foundPropertyName: string | null = null;
+
+              const elevations = allFeatures
+                .map((f: any) => {
+                  // Check multiple possible property names
+                  for (const propName of propertyNames) {
+                    const value = f.properties?.[propName];
+                    if (value != null && typeof value === 'number') {
+                      if (!foundPropertyName) foundPropertyName = propName;
+                      return value;
+                    }
+                  }
+                  return null;
+                })
+                .filter((ele: any) => ele != null && typeof ele === 'number')
+                .sort((a: number, b: number) => a - b);
+
+              if (elevations.length > 0) {
+                const uniqueElevations = [...new Set(elevations)];
+                console.log('[DEBUG MAP] Elevation values in data:', {
+                  propertyName: foundPropertyName,
+                  total: elevations.length,
+                  unique: uniqueElevations.length,
+                  min: Math.min(...elevations),
+                  max: Math.max(...elevations),
+                  sample: uniqueElevations.slice(0, 20),
+                  intervals: uniqueElevations.slice(1).map((val, i) => val - uniqueElevations[i]).slice(0, 10)
+                });
+                console.warn(`[DEBUG MAP] ⚠️ CRITICAL: Contours use property "${foundPropertyName}" but filters expect "ele"!`);
+              } else if (allFeatures.length > 0) {
+                const allPropertyKeys = [...new Set(allFeatures.flatMap((f: any) => Object.keys(f.properties || {})))];
+                console.warn('[DEBUG MAP] Features exist but no elevation property found. Property names:', allPropertyKeys);
+                console.log('[DEBUG MAP] Sample feature properties:', allFeatures[0]?.properties);
+              }
+            }
+          } catch (err) {
+            console.warn('[DEBUG MAP] Error querying contour features:', err);
+          }
+        }
+      });
+
+      map.on('data', (e: any) => {
+        if (e.dataType === 'source' && e.sourceId === 'contours') {
+          console.log('[DEBUG MAP] Contour source data event:', {
+            sourceId: e.sourceId,
+            dataType: e.dataType,
+            isSourceLoaded: e.isSourceLoaded
+          });
+        }
+      });
+
+      // Check contour layers after map is idle
+      map.on('idle', () => {
+        try {
+          const contourLayers = ['contours', 'contours-regular', 'contours-index'].filter(id => 
+            map.getLayer(id)
+          );
+          
+          if (contourLayers.length > 0) {
+            console.log('[DEBUG MAP] Contour layers on map:', {
+              layerIds: contourLayers,
+              layers: contourLayers.map(id => {
+                const layer = map.getLayer(id);
+                const source = layer ? map.getSource((layer as any).source) : null;
+                return {
+                  id,
+                  exists: !!layer,
+                  visibility: (layer as any)?.layout?.visibility,
+                  source: (layer as any)?.source,
+                  sourceExists: !!source,
+                  sourceType: source?.type
+                };
+              })
+            });
+
+            // Try to query features - try multiple approaches
+            const source = map.getSource('contours');
+            if (source && source.type === 'vector') {
+              // Try querying without sourceLayer first
+              try {
+                const allFeaturesNoLayer = map.querySourceFeatures('contours');
+                console.log('[DEBUG MAP] All features (no sourceLayer specified):', {
+                  count: allFeaturesNoLayer.length,
+                  sample: allFeaturesNoLayer.slice(0, 2).map((f: any) => ({
+                    sourceLayer: f.sourceLayer,
+                    properties: f.properties
+                  }))
+                });
+              } catch (err) {
+                console.warn('[DEBUG MAP] Error querying without sourceLayer:', err);
+              }
+
+              // Try with 'contour' sourceLayer
+              try {
+                const allFeatures = map.querySourceFeatures('contours', {
+                  sourceLayer: 'contour'
+                });
+                
+                console.log('[DEBUG MAP] All contour features (sourceLayer: "contour"):', {
+                  count: allFeatures.length,
+                  sampleFeatures: allFeatures.slice(0, 3).map((f: any) => ({
+                    id: f.id,
+                    properties: f.properties,
+                    propertyKeys: Object.keys(f.properties || {}),
+                    geometry: f.geometry?.type
+                  }))
+                });
+
+                if (allFeatures.length === 0) {
+                  // Try other possible source-layer names
+                  const possibleLayers = ['contours', 'elevation', 'elevation_contour', 'contourlines'];
+                  for (const layerName of possibleLayers) {
+                    try {
+                      const testFeatures = map.querySourceFeatures('contours', {
+                        sourceLayer: layerName
+                      });
+                      if (testFeatures.length > 0) {
+                        console.log(`[DEBUG MAP] Found features with sourceLayer "${layerName}":`, {
+                          count: testFeatures.length,
+                          sample: testFeatures[0]?.properties
+                        });
+                      }
+                    } catch (e) {
+                      // Ignore
+                    }
+                  }
+                } else {
+                  // If we found features, check elevation values
+                  const elevations = allFeatures
+                    .map((f: any) => {
+                      return f.properties?.ele || 
+                             f.properties?.elevation || 
+                             f.properties?.ELE || 
+                             f.properties?.ELEVATION ||
+                             f.properties?.height;
+                    })
+                    .filter((ele: any) => ele != null && typeof ele === 'number')
+                    .sort((a: number, b: number) => a - b);
+                  
+                  if (elevations.length > 0) {
+                    const uniqueElevations = [...new Set(elevations)];
+                    console.log('[DEBUG MAP] Elevation values in data:', {
+                      total: elevations.length,
+                      unique: uniqueElevations.length,
+                      min: Math.min(...elevations),
+                      max: Math.max(...elevations),
+                      sample: uniqueElevations.slice(0, 20),
+                      intervals: uniqueElevations.slice(1).map((val, i) => val - uniqueElevations[i]).slice(0, 10)
+                    });
+                  } else {
+                    const allPropertyKeys = [...new Set(allFeatures.flatMap((f: any) => Object.keys(f.properties || {})))];
+                    console.warn('[DEBUG MAP] Features exist but no elevation property found. Property names:', allPropertyKeys);
+                    console.log('[DEBUG MAP] Sample feature properties:', allFeatures[0]?.properties);
+                  }
+                }
+              } catch (err) {
+                console.warn('[DEBUG MAP] Error querying with sourceLayer:', err);
+              }
+            }
+
+            // Query rendered features
+            contourLayers.forEach(layerId => {
+              try {
+                const features = map.queryRenderedFeatures(undefined, {
+                  layers: [layerId]
+                });
+                console.log(`[DEBUG MAP] Rendered features for ${layerId}:`, {
+                  count: features.length,
+                  sample: features.slice(0, 3).map((f: any) => ({
+                    id: f.id,
+                    properties: f.properties
+                  }))
+                });
+              } catch (err) {
+                console.warn(`[DEBUG MAP] Error querying rendered features for ${layerId}:`, err);
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('[DEBUG MAP] Error checking contour layers:', err);
+        }
       });
     }
   }, [onMapLoad]);

@@ -153,7 +153,16 @@ export const ControlSlider = React.forwardRef<HTMLInputElement, SliderProps>(
 
     const handleDisplayClick = () => {
       if (displayValue !== undefined && onValueChange && props.value !== undefined) {
-        const currentValue = typeof props.value === 'string' ? parseFloat(props.value) : props.value;
+        let currentValue: number;
+        if (typeof props.value === 'string') {
+          currentValue = parseFloat(props.value);
+        } else if (typeof props.value === 'number') {
+          currentValue = props.value;
+        } else if (Array.isArray(props.value)) {
+          currentValue = parseFloat(props.value[0] || '0');
+        } else {
+          currentValue = 0;
+        }
         setEditValue(formatValue ? formatValue(currentValue) : String(currentValue));
         setIsEditing(true);
       }

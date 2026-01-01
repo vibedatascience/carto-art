@@ -16,7 +16,7 @@ import { ControlDrawer } from './ControlDrawer';
 import type MapLibreGL from 'maplibre-gl';
 
 export function PosterEditor() {
-  const [activeTab, setActiveTab] = useState<Tab>('library');
+  const [activeTab, setActiveTab] = useState<Tab>('location');
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
   const { 

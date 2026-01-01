@@ -80,7 +80,11 @@ const mapStyle = {
       type: 'line',
       source: 'contours',
       'source-layer': 'contour',
-      filter: ['<', ['get', 'ele'], 0],
+      filter: [
+        'all',
+        ['has', 'elevation'],
+        ['<', ['get', 'elevation'], 0]
+      ],
       paint: {
         'line-color': '#001a33',
         'line-width': ['interpolate', ['linear'], ['zoom'], 9, 20, 12, 60, 15, 120],
@@ -222,15 +226,40 @@ const mapStyle = {
       },
     },
     {
-      id: 'boundaries-admin',
+      id: 'boundaries-country',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'boundary',
+      filter: ['all', ['==', ['get', 'admin_level'], 2], ['==', ['get', 'maritime'], 0]],
+      paint: {
+        'line-color': defaultPalette.border || defaultPalette.text,
+        'line-width': 1.5,
+        'line-opacity': 0.3,
+      },
+    },
+    {
+      id: 'boundaries-state',
       type: 'line',
       source: 'openmaptiles',
       'source-layer': 'boundary',
       filter: ['all', ['==', ['get', 'admin_level'], 4], ['==', ['get', 'maritime'], 0]],
       paint: {
-        'line-color': defaultPalette.text,
-        'line-width': 0.5,
+        'line-color': defaultPalette.border || defaultPalette.text,
+        'line-width': 0.75,
         'line-dasharray': [4, 4],
+        'line-opacity': 0.2,
+      },
+    },
+    {
+      id: 'boundaries-county',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'boundary',
+      filter: ['all', ['==', ['get', 'admin_level'], 6], ['==', ['get', 'maritime'], 0]],
+      paint: {
+        'line-color': defaultPalette.border || defaultPalette.text,
+        'line-width': 0.5,
+        'line-dasharray': [2, 2],
         'line-opacity': 0.15,
       },
     },
@@ -312,7 +341,8 @@ const layerToggles: LayerToggle[] = [
   { id: 'parks', name: 'Parks', layerIds: ['park'] },
   { id: 'terrain', name: 'Terrain Shading', layerIds: ['hillshade'] },
   { id: 'contours', name: 'Topography (Contours)', layerIds: ['contours'] },
-  { id: 'labels-admin', name: 'State & Country Names', layerIds: ['labels-country', 'labels-state', 'boundaries-admin'] },
+  { id: 'labels-admin', name: 'State & Country Names', layerIds: ['labels-country', 'labels-state'] },
+  { id: 'boundaries', name: 'Administrative Boundaries', layerIds: ['boundaries-country', 'boundaries-state', 'boundaries-county'] },
   { id: 'labels-cities', name: 'City Names', layerIds: ['labels-city'] },
 ];
 

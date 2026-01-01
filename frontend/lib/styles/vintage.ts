@@ -471,15 +471,40 @@ const mapStyle = {
       },
     },
     {
-      id: 'boundaries-admin',
+      id: 'boundaries-country',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'boundary',
+      filter: ['all', ['==', ['get', 'admin_level'], 2], ['==', ['get', 'maritime'], 0]],
+      paint: {
+        'line-color': defaultPalette.border || defaultPalette.text,
+        'line-width': 1.5,
+        'line-opacity': 0.3,
+      },
+    },
+    {
+      id: 'boundaries-state',
       type: 'line',
       source: 'openmaptiles',
       'source-layer': 'boundary',
       filter: ['all', ['==', ['get', 'admin_level'], 4], ['==', ['get', 'maritime'], 0]],
       paint: {
-        'line-color': defaultPalette.text,
-        'line-width': 0.5,
+        'line-color': defaultPalette.border || defaultPalette.text,
+        'line-width': 0.75,
         'line-dasharray': [4, 4],
+        'line-opacity': 0.2,
+      },
+    },
+    {
+      id: 'boundaries-county',
+      type: 'line',
+      source: 'openmaptiles',
+      'source-layer': 'boundary',
+      filter: ['all', ['==', ['get', 'admin_level'], 6], ['==', ['get', 'maritime'], 0]],
+      paint: {
+        'line-color': defaultPalette.border || defaultPalette.text,
+        'line-width': 0.5,
+        'line-dasharray': [2, 2],
         'line-opacity': 0.15,
       },
     },
@@ -603,7 +628,12 @@ const layerToggles: LayerToggle[] = [
   {
     id: 'labels-admin',
     name: 'State & Country Names',
-    layerIds: ['labels-country', 'labels-state', 'boundaries-admin'],
+    layerIds: ['labels-country', 'labels-state'],
+  },
+  {
+    id: 'boundaries',
+    name: 'Administrative Boundaries',
+    layerIds: ['boundaries-country', 'boundaries-state', 'boundaries-county'],
   },
   {
     id: 'labels-cities',

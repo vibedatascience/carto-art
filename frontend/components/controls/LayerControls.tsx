@@ -61,7 +61,7 @@ export function LayerControls({ layers, onLayersChange, availableToggles, palett
 
   // Categorize layers
   const geographicLayers = availableToggles.filter(t => 
-    ['terrain', 'water', 'parks', 'buildings', 'terrainUnderWater', 'contours'].includes(t.id)
+    ['terrain', 'water', 'parks', 'buildings', 'terrainUnderWater', 'contours', 'boundaries'].includes(t.id)
   );
   const labelLayers = availableToggles.filter(t => 
     ['labels', 'labels-admin', 'labels-cities'].includes(t.id)

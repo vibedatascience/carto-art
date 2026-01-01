@@ -117,6 +117,7 @@ export interface PosterConfig {
     labelStyle?: 'standard' | 'elevated' | 'glass' | 'vintage'; // New: control map label visual style
     'labels-admin'?: boolean; // Toggle for state & country names
     'labels-cities'?: boolean; // Toggle for city names
+    boundaries?: boolean; // Toggle for administrative boundaries (country/state/county)
     marker: boolean;
     markerType?: 'pin' | 'crosshair' | 'dot' | 'ring' | 'heart' | 'home';
     markerColor?: string;
