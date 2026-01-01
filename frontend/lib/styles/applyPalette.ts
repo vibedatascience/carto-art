@@ -314,12 +314,38 @@ function updateLayerPaint(
 
   // Labels
   if (id.includes('label') && type === 'symbol') {
+    // Determine label type and set appropriate halo settings for fade-out effect
+    let haloWidth: number;
+    let haloBlur: number;
+    
+    if (id === 'labels-country') {
+      // Country labels: largest halos for maximum legibility
+      haloWidth = 3.5;
+      haloBlur = 2.5;
+    } else if (id === 'labels-state') {
+      // State labels: medium halos
+      haloWidth = 2.75;
+      haloBlur = 1.75;
+    } else if (id === 'labels-city') {
+      // City labels: smaller halos
+      haloWidth = 2.25;
+      haloBlur = 1.25;
+    } else {
+      // Unknown label type: use city label defaults as fallback
+      haloWidth = 2.25;
+      haloBlur = 1.25;
+    }
+    
+    // Preserve existing text-opacity if set, otherwise default to 0.9
+    const textOpacity = layer.paint?.['text-opacity'] ?? 0.9;
+    
     layer.paint = {
       ...layer.paint,
       'text-color': palette.text,
-      'text-halo-width': 0,
-      'text-halo-blur': 0,
-      'text-opacity': 0.9,
+      'text-halo-color': palette.background,
+      'text-halo-width': haloWidth,
+      'text-halo-blur': haloBlur,
+      'text-opacity': textOpacity,
     };
     return;
   }
