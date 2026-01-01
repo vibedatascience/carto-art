@@ -181,11 +181,7 @@ const mapStyle = {
       type: 'vector',
       url: getContourTileJsonUrl() || '',
       minzoom: 9,
-      maxzoom: 14,
-      // Force higher-detail tiles at lower zooms for smoother contours
-      // tileSize: 512 fetches tiles from 1 zoom level higher (e.g., zoom 12 tiles at map zoom 11)
-      // Better balance of quality vs performance than 1024 (2 levels higher)
-      tileSize: 512,
+      maxzoom: 15,
     },
     population: {
       type: 'vector',
@@ -283,7 +279,16 @@ const mapStyle = {
       filter: [
         'all',
         ['has', 'height'],
-        ['!=', ['%', ['get', 'height'], 50], 0]
+        ['>', ['get', 'height'], 0],
+        // Show all non-major contours (exclude 500m, 1000m major intervals)
+        // This works better with data at different zoom levels
+        [
+          'any',
+          // Not a 500m interval
+          ['!=', ['%', ['get', 'height'], 500], 0],
+          // OR between 0-500m (to show detail at low elevations)
+          ['<', ['get', 'height'], 500]
+        ]
       ],
       layout: {
         'line-join': 'round',
@@ -293,19 +298,19 @@ const mapStyle = {
         'line-color': '#B8A080',
         'line-width': [
           'interpolate', ['linear'], ['zoom'],
-          9, 0.2,
-          10, 0.3,
-          11, 0.4,
-          12, 0.6,
-          13, 0.8,
-          14, 1.0,
-          15, 1.2,
+          9, 0.4,
+          10, 0.5,
+          11, 0.6,
+          12, 0.8,
+          13, 1.0,
+          14, 1.2,
+          15, 1.4,
         ],
         'line-opacity': [
           'interpolate', ['linear'], ['zoom'],
-          9, 0.3,
-          11, 0.4,
-          13, 0.5,
+          9, 0.5,
+          11, 0.6,
+          13, 0.7,
         ],
       },
     },
@@ -317,7 +322,9 @@ const mapStyle = {
       filter: [
         'all',
         ['has', 'height'],
-        ['==', ['%', ['get', 'height'], 50], 0]
+        ['>', ['get', 'height'], 0],
+        // Show major index contours (500m, 1000m, etc.)
+        ['==', ['%', ['get', 'height'], 500], 0]
       ],
       layout: {
         'line-join': 'round',
@@ -352,21 +359,8 @@ const mapStyle = {
         'all',
         ['has', 'height'],
         ['>', ['get', 'height'], 0],
-        [
-          'any',
-          // At low zoom, label 100m intervals
-          [
-            'all',
-            ['<', ['zoom'], 11],
-            ['==', ['%', ['get', 'height'], 100], 0]
-          ],
-          // At medium/high zoom, label 50m intervals
-          [
-            'all',
-            ['>=', ['zoom'], 11],
-            ['==', ['%', ['get', 'height'], 50], 0]
-          ]
-        ]
+        // Label major index contours (500m intervals)
+        ['==', ['%', ['get', 'height'], 500], 0]
       ],
       layout: {
         'symbol-placement': 'line',
@@ -374,8 +368,11 @@ const mapStyle = {
         'text-font': ['Noto Sans Regular'],
         'text-size': [
           'interpolate', ['linear'], ['zoom'],
+          9, 7,
           10, 8,
+          11, 8.5,
           12, 9,
+          13, 9.5,
           14, 10,
           15, 11,
         ],
@@ -383,6 +380,7 @@ const mapStyle = {
         'text-max-angle': 30,
         'symbol-spacing': [
           'interpolate', ['linear'], ['zoom'],
+          9, 250,
           10, 300,
           12, 350,
           14, 400,
@@ -395,10 +393,10 @@ const mapStyle = {
         'text-halo-blur': 0.5,
         'text-opacity': [
           'interpolate', ['linear'], ['zoom'],
-          10, 0,
-          11, 0.6,
-          12, 0.8,
-          13, 1,
+          9, 0.7,
+          10, 0.8,
+          11, 0.9,
+          12, 1,
         ],
       },
     },

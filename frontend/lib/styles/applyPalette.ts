@@ -46,6 +46,19 @@ export function applyPaletteToStyle(
     hasLayerToggles: !!layerToggles,
     styleName: style?.name
   });
+
+  // Count contour layers in original style
+  const originalContourLayers = style.layers?.filter((l: any) =>
+    l.id.includes('contour') || l.source === 'contours'
+  ) || [];
+  console.log('[DEBUG] Original style contour layers:', {
+    count: originalContourLayers.length,
+    layers: originalContourLayers.map((l: any) => ({
+      id: l.id,
+      type: l.type,
+      source: l.source
+    }))
+  });
   
   // Use a faster/cleaner deep clone if possible, but JSON is safe for Mapbox styles
   const updatedStyle = JSON.parse(JSON.stringify(style));
@@ -542,12 +555,12 @@ function updateLayerPaint(
 }
 
 function applyContourDensity(layer: any, density: number | undefined) {
-  if (!density || layer['source-layer'] !== 'contour' || layer.id?.includes('label')) {
+  if (!density || layer['source-layer'] !== 'contour') {
     console.log('[DEBUG] applyContourDensity skipped:', {
       id: layer.id,
       density,
       sourceLayer: layer['source-layer'],
-      reason: !density ? 'no density' : (layer.id?.includes('label') ? 'is label layer' : 'wrong source-layer')
+      reason: !density ? 'no density' : 'wrong source-layer'
     });
     return;
   }
@@ -563,107 +576,129 @@ function applyContourDensity(layer: any, density: number | undefined) {
   const hasEle = ['has', 'height'];
   const getEle = ['get', 'height'];
 
-  // Zoom-adaptive intervals: wider intervals at low zoom for better visibility
-  // Low zoom (9-10): 100m intervals
-  // Medium zoom (11-12): 50m intervals
-  // High zoom (13+): User's density setting
+  // Zoom-aware filters: At low zoom, show whatever data is available
+  // At high zoom (13+), use user's density setting for fine control
 
-  if (layer.id.includes('index')) {
-    // Index contours: Always show major intervals (100m at low zoom, 50m otherwise)
+  if (layer.id.includes('label')) {
+    // Labels: Zoom-adaptive intervals
     layer.filter = [
       'all',
       hasEle,
+      ['>', getEle, 0],
       [
         'any',
-        // At low zoom, show 100m intervals
+        // High zoom: user's 5x density (e.g., 50m if density=10m)
+        [
+          'all',
+          ['>=', ['zoom'], 13],
+          ['==', ['%', getEle, density * 5], 0]
+        ],
+        // Medium zoom: 500m intervals
+        [
+          'all',
+          ['<', ['zoom'], 13],
+          ['>=', ['zoom'], 11],
+          ['==', ['%', getEle, 500], 0]
+        ],
+        // Low zoom: 1000m intervals
         [
           'all',
           ['<', ['zoom'], 11],
-          ['==', ['%', getEle, 100], 0]
-        ],
-        // At medium/high zoom, show 50m or user's 5x density
-        [
-          'all',
-          ['>=', ['zoom'], 11],
-          ['==', ['%', getEle, Math.max(50, density * 5)], 0]
+          ['==', ['%', getEle, 1000], 0]
         ]
       ]
     ];
-    console.log('[DEBUG] Index contour filter (zoom-adaptive):', {
+    console.log('[DEBUG] Zoom-adaptive label filter:', {
       id: layer.id,
       density,
-      lowZoomInterval: 100,
-      highZoomInterval: Math.max(50, density * 5),
-      filter: JSON.stringify(layer.filter)
+      highZoomInterval: density * 5,
+      mediumZoomInterval: 500,
+      lowZoomInterval: 1000
     });
-  } else if (layer.id.includes('regular')) {
-    // Regular contours: Zoom-adaptive with user density
+  } else if (layer.id.includes('index')) {
+    // Index contours: Zoom-adaptive major intervals
     layer.filter = [
       'all',
       hasEle,
+      ['>', getEle, 0],
       [
         'any',
-        // At low zoom (9-10): Show 50m intervals (but not 100m which are index)
+        // High zoom (13+): user's 5x density (e.g., 50m if density=10m)
+        [
+          'all',
+          ['>=', ['zoom'], 13],
+          ['==', ['%', getEle, density * 5], 0]
+        ],
+        // Medium zoom (11-13): 500m intervals
+        [
+          'all',
+          ['<', ['zoom'], 13],
+          ['>=', ['zoom'], 11],
+          ['==', ['%', getEle, 500], 0]
+        ],
+        // Low zoom (<11): 1000m intervals
         [
           'all',
           ['<', ['zoom'], 11],
-          ['==', ['%', getEle, 50], 0],
-          ['!=', ['%', getEle, 100], 0]
-        ],
-        // At medium zoom (11-12): Show 20m intervals (but not 100m)
-        [
-          'all',
-          ['>=', ['zoom'], 11],
-          ['<', ['zoom'], 13],
-          ['==', ['%', getEle, 20], 0],
-          ['!=', ['%', getEle, 100], 0]
-        ],
-        // At high zoom (13+): Show user's density (but not index intervals)
+          ['==', ['%', getEle, 1000], 0]
+        ]
+      ]
+    ];
+    console.log('[DEBUG] Zoom-adaptive index contour filter:', {
+      id: layer.id,
+      highZoomInterval: density * 5,
+      mediumZoomInterval: 500,
+      lowZoomInterval: 1000
+    });
+  } else if (layer.id.includes('regular')) {
+    // Regular contours: Zoom-adaptive intermediate intervals
+    layer.filter = [
+      'all',
+      hasEle,
+      ['>', getEle, 0],
+      [
+        'any',
+        // High zoom (13+): user's density, excluding index intervals
         [
           'all',
           ['>=', ['zoom'], 13],
           ['==', ['%', getEle, density], 0],
-          ['!=', ['%', getEle, Math.max(50, density * 5)], 0]
-        ]
-      ]
-    ];
-    console.log('[DEBUG] Regular contour filter (zoom-adaptive):', {
-      id: layer.id,
-      density,
-      zoom9_10: '50m (not 100m)',
-      zoom11_12: '20m (not 100m)',
-      zoom13plus: `${density}m (not ${Math.max(50, density * 5)}m)`,
-      filter: JSON.stringify(layer.filter)
-    });
-  } else {
-    // Simple contours: Just use zoom-adaptive intervals
-    layer.filter = [
-      'all',
-      hasEle,
-      [
-        'any',
+          ['!=', ['%', getEle, density * 5], 0]
+        ],
+        // Medium zoom (11-13): show all non-500m intervals (200m, 300m, 400m, 600m, etc.)
+        [
+          'all',
+          ['<', ['zoom'], 13],
+          ['>=', ['zoom'], 11],
+          ['!=', ['%', getEle, 500], 0]
+        ],
+        // Low zoom (<11): show 200m intervals (excluding 1000m)
         [
           'all',
           ['<', ['zoom'], 11],
-          ['==', ['%', getEle, 100], 0]
-        ],
-        [
-          'all',
-          ['>=', ['zoom'], 11],
-          ['<', ['zoom'], 13],
-          ['==', ['%', getEle, 50], 0]
-        ],
-        [
-          'all',
-          ['>=', ['zoom'], 13],
-          ['==', ['%', getEle, density], 0]
+          ['==', ['%', getEle, 200], 0],
+          ['!=', ['%', getEle, 1000], 0]
         ]
       ]
     ];
-    console.log('[DEBUG] Simple contour filter (zoom-adaptive):', {
+    console.log('[DEBUG] Zoom-adaptive regular contour filter:', {
+      id: layer.id,
+      highZoomInterval: density,
+      mediumZoomLogic: 'all except 500m',
+      lowZoomInterval: 200
+    });
+  } else {
+    // Simple contours: Just user's density
+    layer.filter = [
+      'all',
+      hasEle,
+      ['==', ['%', getEle, density], 0]
+    ];
+    console.log('[DEBUG] Simple contour filter:', {
       id: layer.id,
       density,
-      filter: JSON.stringify(layer.filter)
+      filter: JSON.stringify(layer.filter),
+      explanation: `Shows elevations at ${density}m intervals`
     });
   }
   

@@ -72,12 +72,37 @@ export function MapPreview({
       // Wait for next frame to check if layers are on the map
       setTimeout(() => {
         try {
-          const contourLayers = ['contours', 'contours-regular', 'contours-index'].filter(id => 
+          const contourLayers = ['contours', 'contours-regular', 'contours-index', 'contours-labels'].filter(id =>
             map.getLayer(id)
           );
           console.log('[DEBUG MAP] Contour layers on map after style load:', {
             found: contourLayers.length,
-            layerIds: contourLayers
+            layerIds: contourLayers,
+            details: contourLayers.map(id => {
+              const layer = map.getLayer(id);
+              return {
+                id,
+                type: (layer as any)?.type,
+                visibility: (layer as any)?.layout?.visibility,
+                hasFilter: !!(layer as any)?.filter
+              };
+            })
+          });
+
+          // Also check ALL layers with 'contour' in the name
+          const allLayers = map.getStyle().layers || [];
+          const allContourLayers = allLayers.filter((l: any) =>
+            l.id.includes('contour') || l.source === 'contours'
+          );
+          console.log('[DEBUG MAP] ALL contour-related layers in style:', {
+            count: allContourLayers.length,
+            layers: allContourLayers.map((l: any) => ({
+              id: l.id,
+              type: l.type,
+              source: l.source,
+              sourceLayer: l['source-layer'],
+              visibility: l.layout?.visibility
+            }))
           });
         } catch (err) {
           console.warn('[DEBUG MAP] Error checking layers:', err);
@@ -213,6 +238,11 @@ export function MapPreview({
 
               if (elevations.length > 0) {
                 const uniqueElevations = [...new Set(elevations)];
+                const intervals = uniqueElevations.slice(1).map((val, i) => val - uniqueElevations[i]);
+                const minInterval = Math.min(...intervals);
+                const hasEvery10m = uniqueElevations.some((val, i) => i > 0 && (val - uniqueElevations[i-1]) === 10);
+                const hasEvery50m = uniqueElevations.some((val, i) => i > 0 && (val - uniqueElevations[i-1]) === 50);
+
                 console.log('[DEBUG MAP] Elevation values in data:', {
                   propertyName: foundPropertyName,
                   total: elevations.length,
@@ -220,7 +250,14 @@ export function MapPreview({
                   min: Math.min(...elevations),
                   max: Math.max(...elevations),
                   sample: uniqueElevations.slice(0, 20),
-                  intervals: uniqueElevations.slice(1).map((val, i) => val - uniqueElevations[i]).slice(0, 10)
+                  intervals: intervals.slice(0, 10),
+                  minInterval,
+                  hasEvery10m,
+                  hasEvery50m,
+                  analysis: minInterval < 10 ? 'High res data available' :
+                           minInterval === 10 ? '10m interval data available' :
+                           minInterval === 20 ? '20m interval data (no 10m)' :
+                           `Sparse data: ${minInterval}m minimum interval`
                 });
                 console.log(`[DEBUG MAP] ✅ Contours use property "${foundPropertyName}" - filters should match this property name`);
               } else if (allFeatures.length > 0) {
@@ -248,10 +285,10 @@ export function MapPreview({
       // Check contour layers after map is idle
       map.on('idle', () => {
         try {
-          const contourLayers = ['contours', 'contours-regular', 'contours-index'].filter(id => 
+          const contourLayers = ['contours', 'contours-regular', 'contours-index', 'contours-labels'].filter(id =>
             map.getLayer(id)
           );
-          
+
           if (contourLayers.length > 0) {
             console.log('[DEBUG MAP] Contour layers on map:', {
               layerIds: contourLayers,
