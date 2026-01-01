@@ -193,7 +193,7 @@ const mapStyle = {
     contours: {
       type: 'vector',
       url: getContourTileJsonUrl() || '',
-      minzoom: 0,
+      minzoom: 9,
       maxzoom: 15,
     },
     population: {
@@ -208,6 +208,7 @@ const mapStyle = {
       tiles: [getAwsTerrariumTileUrl()],
       tileSize: TERRAIN_TILE_SIZE,
       encoding: 'terrarium',
+      maxzoom: 14,
     },
   },
   glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
