@@ -281,16 +281,16 @@ export function PosterEditor() {
         style={{ containerType: 'size' }}
       >
         {/* Top Actions Overlay - Desktop Only */}
-        <div className="absolute top-6 right-8 z-50 pointer-events-auto hidden md:flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-1">
+        <div className="absolute top-4 right-4 z-50 pointer-events-auto hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <button
               onClick={undo}
               disabled={!canUndo}
               className={cn(
-                "p-2 rounded-md transition-colors",
+                "p-1.5 rounded transition-colors",
                 canUndo
-                  ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
-                  : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                  ? "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  : "text-gray-200 dark:text-gray-700 cursor-not-allowed"
               )}
               title="Undo (Ctrl+Z)"
             >
@@ -300,10 +300,10 @@ export function PosterEditor() {
               onClick={redo}
               disabled={!canRedo}
               className={cn(
-                "p-2 rounded-md transition-colors",
+                "p-1.5 rounded transition-colors",
                 canRedo
-                  ? "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
-                  : "text-gray-300 dark:text-gray-600 cursor-not-allowed"
+                  ? "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  : "text-gray-200 dark:text-gray-700 cursor-not-allowed"
               )}
               title="Redo (Ctrl+Shift+Z)"
             >
@@ -312,25 +312,23 @@ export function PosterEditor() {
           </div>
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             title="Copy share link"
           >
-            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
-            {copied ? 'Copied!' : 'Share'}
+            {copied ? <Check className="w-4 h-4 text-gray-600 dark:text-gray-300" /> : <Share2 className="w-4 h-4" />}
           </button>
           <button
             onClick={handleQuickSave}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+            className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             title="Quick save to browser"
           >
-            {quickSaved ? <Check className="w-4 h-4 text-green-500" /> : <Save className="w-4 h-4" />}
-            {quickSaved ? 'Saved!' : 'Save'}
+            {quickSaved ? <Check className="w-4 h-4 text-gray-600 dark:text-gray-300" /> : <Save className="w-4 h-4" />}
           </button>
-          <div className="flex items-center shadow-sm">
+          <div className="flex items-center gap-1 ml-2">
             <select
               value={exportResolution}
               onChange={(e) => setExportResolution(e.target.value as ExportResolutionKey)}
-              className="h-9 text-xs rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="h-7 text-[11px] rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 pl-2 pr-6 focus:outline-none"
             >
               {Object.entries(EXPORT_RESOLUTIONS).map(([key, res]) => (
                 <option key={key} value={key}>{res.name}</option>
@@ -339,12 +337,12 @@ export function PosterEditor() {
             <button
               onClick={handleExport}
               disabled={isExporting}
-              className="inline-flex items-center gap-2 px-4 h-9 text-sm rounded-r-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 h-7 text-[11px] rounded bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               {isExporting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3 h-3 animate-spin" />
               ) : (
-                <Download className="w-4 h-4" />
+                <Download className="w-3 h-3" />
               )}
               Export
             </button>
@@ -391,27 +389,27 @@ export function PosterEditor() {
               />
               
               {/* Floating Map Controls */}
-              <div className="absolute bottom-4 right-4 flex flex-row gap-2 z-10">
+              <div className="absolute bottom-3 right-3 flex flex-row gap-1 z-10">
                 <button
                   onClick={zoomOut}
-                  className="p-2 bg-white/90 hover:bg-white border border-gray-200 rounded-md shadow-sm transition-colors text-gray-600 hover:text-blue-600 pointer-events-auto"
+                  className="p-1.5 bg-white/80 hover:bg-white rounded transition-colors text-gray-400 hover:text-gray-600 pointer-events-auto"
                   title="Zoom Out"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={zoomIn}
-                  className="p-2 bg-white/90 hover:bg-white border border-gray-200 rounded-md shadow-sm transition-colors text-gray-600 hover:text-blue-600 pointer-events-auto"
+                  className="p-1.5 bg-white/80 hover:bg-white rounded transition-colors text-gray-400 hover:text-gray-600 pointer-events-auto"
                   title="Zoom In"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={fitToLocation}
-                  className="p-2 bg-white/90 hover:bg-white border border-gray-200 rounded-md shadow-sm transition-colors text-gray-600 hover:text-blue-600 pointer-events-auto"
-                  title="Snap map to original bounds"
+                  className="p-1.5 bg-white/80 hover:bg-white rounded transition-colors text-gray-400 hover:text-gray-600 pointer-events-auto"
+                  title="Reset view"
                 >
-                  <Maximize className="h-4 w-4" />
+                  <Maximize className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>

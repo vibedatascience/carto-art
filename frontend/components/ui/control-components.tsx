@@ -47,21 +47,21 @@ Button.displayName = 'Button';
  * Layout Components
  * -----------------------------------------------------------------------------------------------*/
 
-export function ControlSection({ title, children, className, action }: { 
-  title: string; 
-  children: React.ReactNode; 
+export function ControlSection({ title, children, className, action }: {
+  title: string;
+  children: React.ReactNode;
   className?: string;
   action?: React.ReactNode;
 }) {
   return (
-    <section className={cn("space-y-4", className)}>
+    <section className={cn("space-y-3", className)}>
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <h3 className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
           {title}
         </h3>
         {action}
       </div>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {children}
       </div>
     </section>
@@ -126,9 +126,9 @@ interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
 
 export function ControlLabel({ children, className, action, ...props }: LabelProps) {
   return (
-    <div className="flex items-center justify-between mb-1.5">
-      <label 
-        className={cn("text-xs font-medium text-gray-700 dark:text-gray-300 select-none", className)}
+    <div className="flex items-center justify-between mb-1">
+      <label
+        className={cn("text-[11px] text-gray-500 dark:text-gray-400 select-none", className)}
         {...props}
       >
         {children}
@@ -144,7 +144,7 @@ export const ControlInput = React.forwardRef<HTMLInputElement, React.InputHTMLAt
       <input
         ref={ref}
         className={cn(
-          "flex h-9 w-full rounded-md border border-gray-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:focus-visible:ring-blue-400 dark:text-gray-100",
+          "flex h-8 w-full rounded border border-gray-200 bg-transparent px-2.5 py-1 text-xs transition-colors placeholder:text-gray-400 focus-visible:outline-none focus-visible:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:focus-visible:border-gray-500 dark:text-gray-100",
           className
         )}
         {...props}
@@ -163,14 +163,14 @@ export const ControlSelect = React.forwardRef<HTMLSelectElement, SelectProps>(
         <select
           ref={ref}
           className={cn(
-            "flex h-9 w-full appearance-none items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm ring-offset-white placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:ring-offset-gray-950 dark:text-gray-100 dark:focus:ring-blue-400",
+            "flex h-8 w-full appearance-none items-center justify-between rounded border border-gray-200 bg-transparent px-2.5 py-1 text-xs placeholder:text-gray-400 focus:outline-none focus:border-gray-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-100 dark:focus:border-gray-500",
             className
           )}
           {...props}
         >
           {children}
         </select>
-        <ChevronDown className="absolute right-3 top-2.5 h-4 w-4 opacity-50 pointer-events-none" />
+        <ChevronDown className="absolute right-2 top-2 h-3.5 w-3.5 opacity-40 pointer-events-none" />
       </div>
     );
   }
@@ -313,26 +313,17 @@ interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const ControlCheckbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, label, description, checked, ...props }, ref) => {
     return (
-      <label className={cn("flex items-start gap-3 p-2 -ml-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors group", className)}>
-        <div className="relative flex items-center justify-center mt-0.5">
-          <input
-            type="checkbox"
-            className="peer h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-            ref={ref}
-            checked={checked ?? false}
-            {...props}
-          />
-        </div>
-        <div className="flex-1 space-y-0.5">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-            {label}
-          </div>
-          {description && (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {description}
-            </p>
-          )}
-        </div>
+      <label className={cn("flex items-center gap-2 py-1 cursor-pointer group", className)}>
+        <input
+          type="checkbox"
+          className="h-3.5 w-3.5 rounded border-gray-300 text-gray-900 focus:ring-0 focus:ring-offset-0 dark:border-gray-600 dark:bg-gray-800 dark:checked:bg-white dark:checked:border-white"
+          ref={ref}
+          checked={checked ?? false}
+          {...props}
+        />
+        <span className="text-xs text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200 transition-colors">
+          {label}
+        </span>
       </label>
     );
   }
