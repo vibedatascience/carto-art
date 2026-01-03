@@ -29,7 +29,15 @@ export function TextOverlay({ config }: TextOverlayProps) {
   const { typography, location } = config;
 
   const titleText = location.name || 'WHERE WE MET';
-  const subtitleText = location.city || '';
+
+  // Build subtitle: prefer location.subtitle, fall back to city only if different from name
+  let subtitleText = '';
+  if (location.subtitle) {
+    subtitleText = location.subtitle;
+  } else if (location.city && location.city.toLowerCase() !== location.name?.toLowerCase()) {
+    subtitleText = location.city;
+  }
+
   const coordsText = formatCoordinates(location.center);
 
   const positionClasses: Record<PosterConfig['typography']['position'], string> = {
@@ -148,6 +156,34 @@ export function TextOverlay({ config }: TextOverlayProps) {
             <p style={coordsStyle}>
               {coordsText}
             </p>
+          )}
+
+          {/* Custom text lines - for dedications, dates, quotes, etc. */}
+          {typography.customLines && typography.customLines.length > 0 && (
+            <div
+              className="flex flex-col items-center gap-1"
+              style={{ marginTop: '1.5cqw' }}
+            >
+              {typography.customLines.map((line, index) => (
+                <p
+                  key={index}
+                  style={{
+                    fontFamily: typography.subtitleFont,
+                    fontSize: `${typography.subtitleSize * 0.7}cqw`,
+                    color: config.palette.text,
+                    opacity: 0.75,
+                    letterSpacing: '0.08em',
+                    lineHeight: 1.4,
+                    fontStyle: 'italic',
+                    textShadow: (backdropType === 'gradient' || backdropType === 'none')
+                      ? 'none'
+                      : buildHaloTextShadow(config.palette.background, subtitleHalo * 0.8),
+                  }}
+                >
+                  {line}
+                </p>
+              ))}
+            </div>
           )}
         </div>
       </div>

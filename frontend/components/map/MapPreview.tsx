@@ -21,6 +21,7 @@ interface MapPreviewProps {
   layers?: PosterConfig['layers'];
   layerToggles?: LayerToggle[];
   camera?: PosterConfig['camera']; // Pitch and bearing for 3D view
+  areaHighlight?: PosterConfig['areaHighlight']; // Polygon highlight
 }
 
 export function MapPreview({
@@ -33,7 +34,8 @@ export function MapPreview({
   onMove,
   layers,
   layerToggles,
-  camera
+  camera,
+  areaHighlight
 }: MapPreviewProps) {
   const mapRef = useRef<MapRef>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -72,11 +74,96 @@ export function MapPreview({
     }));
   }, [camera?.pitch, camera?.bearing]);
 
+  // Enable/disable 3D terrain
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+    if (!map || !map.isStyleLoaded()) return;
+
+    if (layers?.terrain3D) {
+      // Enable 3D terrain with exaggeration
+      map.setTerrain({
+        source: 'terrain',
+        exaggeration: layers.terrainExaggeration ?? 1.5
+      });
+    } else {
+      // Disable 3D terrain
+      map.setTerrain(null);
+    }
+  }, [layers?.terrain3D, layers?.terrainExaggeration]);
+
+  // Add/update area highlight layer
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+    if (!map || !map.isStyleLoaded()) return;
+
+    const sourceId = 'area-highlight-source';
+    const fillLayerId = 'area-highlight-fill';
+    const strokeLayerId = 'area-highlight-stroke';
+
+    // Remove existing layers and source if they exist
+    if (map.getLayer(fillLayerId)) map.removeLayer(fillLayerId);
+    if (map.getLayer(strokeLayerId)) map.removeLayer(strokeLayerId);
+    if (map.getSource(sourceId)) map.removeSource(sourceId);
+
+    // Add new highlight if coordinates exist
+    if (areaHighlight?.coordinates && areaHighlight.coordinates.length >= 3) {
+      const geojson: GeoJSON.Feature<GeoJSON.Polygon> = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[...areaHighlight.coordinates, areaHighlight.coordinates[0]]] // Close the polygon
+        }
+      };
+
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: geojson
+      });
+
+      // Add fill layer
+      map.addLayer({
+        id: fillLayerId,
+        type: 'fill',
+        source: sourceId,
+        paint: {
+          'fill-color': areaHighlight.fillColor || '#ff6b6b',
+          'fill-opacity': areaHighlight.fillOpacity ?? 0.3
+        }
+      });
+
+      // Add stroke layer
+      map.addLayer({
+        id: strokeLayerId,
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': areaHighlight.strokeColor || areaHighlight.fillColor || '#ff6b6b',
+          'line-width': areaHighlight.strokeWidth ?? 2,
+          'line-opacity': areaHighlight.strokeOpacity ?? 0.8
+        }
+      });
+    }
+  }, [areaHighlight]);
 
   const handleLoad = useCallback(() => {
-    if (mapRef.current && onMapLoad) {
+    if (mapRef.current) {
       const map = mapRef.current.getMap();
-      onMapLoad(map);
+
+      // Notify parent component
+      if (onMapLoad) {
+        onMapLoad(map);
+      }
+
+      // Apply 3D terrain on initial load if enabled
+      if (layers?.terrain3D) {
+        map.setTerrain({
+          source: 'terrain',
+          exaggeration: layers.terrainExaggeration ?? 1.5
+        });
+      }
 
       // Create named handler functions for proper cleanup
       const loadingHandler = () => setIsLoading(true);
@@ -117,7 +204,7 @@ export function MapPreview({
       map.on('idle', idleHandler);
       map.on('dataloading', timeoutHandler);
     }
-  }, [onMapLoad]);
+  }, [onMapLoad, layers?.terrain3D, layers?.terrainExaggeration]);
 
   // Cleanup event listeners and timeouts when component unmounts or map changes
   useEffect(() => {

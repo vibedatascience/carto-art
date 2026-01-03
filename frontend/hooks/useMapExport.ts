@@ -5,6 +5,7 @@ import type MapLibreGL from 'maplibre-gl';
 import type { PosterConfig } from '@/types/poster';
 import { exportMapToPNG, downloadBlob } from '@/lib/export/exportCanvas';
 import { logger } from '@/lib/logger';
+import type { ExportResolution } from '@/lib/export/constants';
 
 /**
  * Hook for exporting the map as a high-resolution PNG image.
@@ -34,18 +35,28 @@ export function useMapExport(config: PosterConfig) {
     mapRef.current = map;
   };
 
-  const exportToPNG = async (filenameOrEvent?: string | React.MouseEvent) => {
+  const exportToPNG = async (options?: { filename?: string; resolution?: ExportResolution } | string | React.MouseEvent) => {
     if (!mapRef.current) {
       throw new Error('Map instance not available');
     }
 
-    const filename = typeof filenameOrEvent === 'string' ? filenameOrEvent : undefined;
+    // Handle different call signatures for backwards compatibility
+    let filename: string | undefined;
+    let resolution: ExportResolution | undefined;
+
+    if (typeof options === 'string') {
+      filename = options;
+    } else if (options && typeof options === 'object' && 'filename' in options) {
+      filename = options.filename;
+      resolution = options.resolution;
+    }
 
     setIsExporting(true);
     try {
       const blob = await exportMapToPNG({
         map: mapRef.current,
         config,
+        resolution,
       });
 
       const exportFilename = filename || `${(config.location.name || 'poster').toString().replace(/[^a-z0-9]/gi, '-').toLowerCase()}-poster.png`;

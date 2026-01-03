@@ -1,10 +1,10 @@
 'use client';
 
-import { Map as MapIcon, Type, Layout, Sparkles, Palette, User, Wand2 } from 'lucide-react';
+import { Sparkles, Pencil, User, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
-export type Tab = 'library' | 'location' | 'style' | 'text' | 'frame' | 'account';
+export type Tab = 'library' | 'design' | 'account';
 
 interface TabNavigationProps {
   activeTab: Tab;
@@ -75,10 +75,7 @@ export function TabNavigation({
 
       <div className="flex md:flex-col flex-1 md:flex-none md:w-full md:space-y-1">
         <TabButton id="library" icon={Sparkles} label="Library" />
-        <TabButton id="location" icon={MapIcon} label="Location" />
-        <TabButton id="style" icon={Palette} label="Style" />
-        <TabButton id="text" icon={Type} label="Text" />
-        <TabButton id="frame" icon={Layout} label="Frame" />
+        <TabButton id="design" icon={Pencil} label="Design" />
         {/* AI Link on mobile - in bottom nav */}
         <div className="md:hidden flex-1">
           <AILink />

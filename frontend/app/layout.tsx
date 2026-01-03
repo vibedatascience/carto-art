@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { KofiWidget } from "@/components/third-party/KofiWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,7 +67,6 @@ export default function RootLayout({
             </Script>
           </>
         )}
-        <KofiWidget />
         {children}
       </body>
     </html>

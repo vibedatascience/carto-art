@@ -5,6 +5,25 @@ import type { Database } from '@/types/database';
 export async function createClient() {
   const cookieStore = await cookies();
 
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return {
+      auth: {
+        getUser: async () => ({ data: { user: null }, error: null }),
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: null, error: null }),
+            maybeSingle: async () => ({ data: null, error: null }),
+          }),
+          order: () => ({ data: [], error: null }),
+          limit: () => ({ data: [], error: null }),
+        }),
+        insert: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }),
+      }),
+    } as any;
+  }
+
   return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

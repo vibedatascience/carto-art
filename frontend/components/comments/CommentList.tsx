@@ -18,9 +18,11 @@ export function CommentList({ comments, onCommentDeleted }: CommentListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    createClient().auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id || null);
-    });
+    const fetchUser = async () => {
+      const { data } = await createClient().auth.getUser();
+      setUserId(data.user?.id || null);
+    };
+    fetchUser();
   }, []);
 
   const handleDelete = async (commentId: string) => {

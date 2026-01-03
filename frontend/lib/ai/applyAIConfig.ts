@@ -25,6 +25,7 @@ export interface CustomPalette {
   accent?: string;
   contour?: string;
   hillshade?: string;
+  population?: string;
 }
 
 /**
@@ -50,6 +51,15 @@ export interface AIGeneratedConfig {
   camera?: {
     pitch?: number; // 0-85 degrees
     bearing?: number; // -180 to 180 degrees
+  };
+  // Area highlight for emphasizing a region
+  areaHighlight?: {
+    coordinates: [number, number][];
+    fillColor?: string;
+    fillOpacity?: number;
+    strokeColor?: string;
+    strokeWidth?: number;
+    strokeOpacity?: number;
   };
 }
 
@@ -122,6 +132,7 @@ function customPaletteToColorPalette(custom: CustomPalette): ColorPalette {
     accent: custom.accent || custom.text,
     contour: custom.contour,
     hillshade: custom.hillshade,
+    population: custom.population,
   };
 }
 
@@ -206,6 +217,18 @@ export function applyAIConfig(
     result.camera = {
       pitch: aiConfig.camera.pitch ?? result.camera?.pitch ?? 0,
       bearing: aiConfig.camera.bearing ?? result.camera?.bearing ?? 0,
+    };
+  }
+
+  // Apply area highlight
+  if (aiConfig.areaHighlight) {
+    result.areaHighlight = {
+      coordinates: aiConfig.areaHighlight.coordinates,
+      fillColor: aiConfig.areaHighlight.fillColor,
+      fillOpacity: aiConfig.areaHighlight.fillOpacity ?? 0.3,
+      strokeColor: aiConfig.areaHighlight.strokeColor,
+      strokeWidth: aiConfig.areaHighlight.strokeWidth ?? 2,
+      strokeOpacity: aiConfig.areaHighlight.strokeOpacity ?? 0.8,
     };
   }
 

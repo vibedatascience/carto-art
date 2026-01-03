@@ -89,6 +89,7 @@ export interface PosterConfig {
     backdropAlpha?: number;  // opacity (0-1)
     backdropSharpness?: number; // New: 0-100 (soft to abrupt)
     maxWidth?: number; // New: max width percentage (0-100)
+    customLines?: string[]; // Additional text lines (dedication, date, quote, etc.)
   };
   format: {
     aspectRatio: '2:3' | '3:4' | '4:5' | '1:1' | 'ISO';
@@ -126,11 +127,23 @@ export interface PosterConfig {
     // 3D Buildings
     buildings3D?: boolean; // Enable 3D extruded buildings
     buildings3DHeight?: number; // Height multiplier (0.5-3)
+    // 3D Terrain
+    terrain3D?: boolean; // Enable 3D terrain (mountains pop out!)
+    terrainExaggeration?: number; // Height multiplier for terrain (0.5-3.0)
   };
   // Camera settings for 3D view
   camera?: {
     pitch: number; // Tilt angle 0-85 degrees
     bearing: number; // Rotation -180 to 180 degrees
+  };
+  // Area highlight - draw attention to a specific region
+  areaHighlight?: {
+    coordinates: [number, number][]; // Array of [lng, lat] points forming polygon
+    fillColor?: string; // Fill color (hex)
+    fillOpacity?: number; // 0-1
+    strokeColor?: string; // Border color (hex)
+    strokeWidth?: number; // Border width in pixels
+    strokeOpacity?: number; // 0-1
   };
 }
 

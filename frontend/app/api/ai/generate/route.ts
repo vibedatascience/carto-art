@@ -30,6 +30,8 @@ You control EVERY color on the map. You can create ANYTHING. Be bold, creative, 
 
 6. **"3D Isometric City Diorama"** - Enable 3D extruded buildings with buildings3D: true and camera pitch: 60°. Dark navy background (#0f172a) with glowing golden buildings (#fbbf24). Use zoom 15+ to see building heights. Dramatic 45° bearing rotation. Futuristic city model aesthetic.
 
+7. **"Epic Mountain Terrain"** - Enable 3D terrain with terrain3D: true and terrainExaggeration: 2.0 for dramatic peaks. Camera pitch 60° to see depth. Contour lines in subtle gray. Works beautifully for Swiss Alps, Rockies, Himalayas. Add hillshade for extra depth.
+
 These are just starting points. You can create: synthwave sunsets, watercolor washes, brutalist concrete, bioluminescent oceans, vintage airline maps, Soviet propaganda, Japanese woodblock prints, circuit board patterns, topographic rainbow gradients, newsprint halftones, chalkboard sketches, 3D city dioramas, or ANYTHING else.
 
 ## Output Schema
@@ -70,7 +72,8 @@ Return a JSON object with these parameters:
     // Optional accent colors
     "accent"?: string,        // Borders, markers, highlights
     "contour"?: string,       // Topographic contour lines
-    "hillshade"?: string      // Terrain shading color
+    "hillshade"?: string,     // Terrain shading color
+    "population"?: string     // Population density heatmap color (use with layers.population: true)
   },
 
   "typography": {
@@ -88,7 +91,8 @@ Return a JSON object with these parameters:
     "textBackdrop"?: "none" | "subtle" | "strong" | "gradient",
     "backdropHeight"?: number, // 0-100 (%), default 35
     "backdropAlpha"?: number,  // 0-1, default 1.0
-    "backdropSharpness"?: number // 0-100 (soft to sharp gradient)
+    "backdropSharpness"?: number, // 0-100 (soft to sharp gradient)
+    "customLines"?: string[]  // Additional text lines (dedication, date, quote) - rendered in italic below coordinates
   },
 
   "format": {
@@ -110,6 +114,8 @@ Return a JSON object with these parameters:
     "water"?: boolean,        // Show water bodies
     "parks"?: boolean,        // Show green spaces
     "terrain"?: boolean,      // Show hillshade/elevation
+    "terrain3D"?: boolean,    // Enable 3D terrain (mountains pop out! - requires camera pitch > 0)
+    "terrainExaggeration"?: number, // 0.5-1000, height multiplier for 3D terrain (default 1.5, go crazy with 100-1000!)
     "hillshadeExaggeration"?: number, // 0-1, terrain intensity
     "contours"?: boolean,     // Topographic contour lines
     "contourDensity"?: number, // 10-500 meters interval
@@ -117,6 +123,7 @@ Return a JSON object with these parameters:
     "labelSize"?: number,     // 0.5-2.5
     "labelStyle"?: "standard" | "elevated" | "glass" | "vintage",
     "pois"?: boolean,         // Points of interest (building names, monuments) - set false for clean look
+    "population"?: boolean,   // Population density heatmap overlay - great for data visualization
     "boundaries"?: boolean,   // Administrative borders
     "marker"?: boolean,       // Center marker
     "markerType"?: "pin" | "crosshair" | "dot" | "ring" | "heart" | "home",
@@ -128,6 +135,16 @@ Return a JSON object with these parameters:
   "camera"?: {
     "pitch"?: number,         // Tilt angle 0-85 degrees (0 = top-down, 60+ = dramatic)
     "bearing"?: number        // Rotation -180 to 180 degrees (0 = north up)
+  },
+
+  // Area highlight - draw attention to a specific neighborhood/region
+  "areaHighlight"?: {
+    "coordinates": [number, number][],  // Array of [lng, lat] points forming polygon
+    "fillColor"?: string,     // Fill color (hex), default palette accent
+    "fillOpacity"?: number,   // 0-1, default 0.3
+    "strokeColor"?: string,   // Border color (hex)
+    "strokeWidth"?: number,   // Border width 1-5, default 2
+    "strokeOpacity"?: number  // 0-1, default 0.8
   }
 }
 \`\`\`

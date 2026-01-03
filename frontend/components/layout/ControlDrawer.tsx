@@ -1,6 +1,6 @@
 'use client';
 
-import { Minus } from 'lucide-react';
+import { Minus, ChevronDown, ChevronUp, MapPin, Palette, Type, Layout } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { LocationSearch } from '@/components/controls/LocationSearch';
@@ -14,6 +14,42 @@ import { SavedProjects } from '@/components/controls/SavedProjects';
 import { AccountPanel } from '@/components/controls/AccountPanel';
 import type { Tab } from './TabNavigation';
 import type { PosterConfig, PosterLocation, PosterStyle, ColorPalette, SavedProject } from '@/types/poster';
+
+// Collapsible section component for the Design tab
+function CollapsibleSection({
+  title,
+  icon: Icon,
+  children,
+  defaultOpen = false
+}: {
+  title: string;
+  icon: React.ElementType;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+      >
+        <span className="flex items-center gap-2">
+          <Icon className="w-4 h-4" />
+          {title}
+        </span>
+        {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+      </button>
+      <div className={cn(
+        "overflow-hidden transition-all duration-200",
+        isOpen ? "max-h-[2000px] opacity-100 pb-4" : "max-h-0 opacity-0"
+      )}>
+        {children}
+      </div>
+    </div>
+  );
+}
 
 interface ControlDrawerProps {
   activeTab: Tab;
@@ -127,89 +163,70 @@ export function ControlDrawer({
           </div>
         )}
 
-        {activeTab === 'location' && (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Search Location
-              </h3>
-              <LocationSearch
-                onLocationSelect={updateLocation}
-                currentLocation={config.location}
-              />
-            </div>
+        {activeTab === 'design' && (
+          <div className="space-y-2">
+            {/* Location Section */}
+            <CollapsibleSection title="Location" icon={MapPin} defaultOpen={true}>
+              <div className="space-y-4">
+                <LocationSearch
+                  onLocationSelect={updateLocation}
+                  currentLocation={config.location}
+                />
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-xs text-blue-800 dark:text-blue-200">
+                  <p className="opacity-90">Drag the map to adjust position, or use zoom controls for perfect framing.</p>
+                </div>
+              </div>
+            </CollapsibleSection>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-xs text-blue-800 dark:text-blue-200">
-              <p className="font-medium mb-1">Tip: Fine-tune your view</p>
-              <p className="opacity-90">Drag the map to adjust position, or use the zoom controls to get the perfect framing.</p>
-            </div>
-          </div>
-        )}
+            {/* Style Section */}
+            <CollapsibleSection title="Style & Colors" icon={Palette}>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Map Style</h4>
+                  <StyleSelector
+                    selectedStyleId={config.style.id}
+                    onStyleSelect={updateStyle}
+                    currentConfig={config}
+                  />
+                </div>
 
-        {activeTab === 'style' && (
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Map Style
-              </h3>
-              <StyleSelector
-                selectedStyleId={config.style.id}
-                onStyleSelect={updateStyle}
-                currentConfig={config}
-              />
-            </div>
+                <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Color Palette</h4>
+                  <ColorControls
+                    palette={config.palette}
+                    presets={config.style.palettes}
+                    onPaletteChange={updatePalette}
+                  />
+                </div>
 
-            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Color Palette
-              </h3>
-              <ColorControls
-                palette={config.palette}
-                presets={config.style.palettes}
-                onPaletteChange={updatePalette}
-              />
-            </div>
+                <div className="space-y-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                  <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Layers</h4>
+                  <LayerControls
+                    layers={config.layers}
+                    onLayersChange={updateLayers}
+                    availableToggles={config.style.layerToggles}
+                    palette={config.palette}
+                  />
+                </div>
+              </div>
+            </CollapsibleSection>
 
-            <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Layer Visibility
-              </h3>
-              <LayerControls
-                layers={config.layers}
-                onLayersChange={updateLayers}
-                availableToggles={config.style.layerToggles}
-                palette={config.palette}
-              />
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'text' && (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Typography
-              </h3>
+            {/* Typography Section */}
+            <CollapsibleSection title="Text & Labels" icon={Type}>
               <TypographyControls
                 config={config}
                 onTypographyChange={updateTypography}
                 onLocationChange={updateLocation}
               />
-            </div>
-          </div>
-        )}
+            </CollapsibleSection>
 
-        {activeTab === 'frame' && (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Format & Layout
-              </h3>
+            {/* Format Section */}
+            <CollapsibleSection title="Format & Frame" icon={Layout}>
               <FormatControls
                 format={config.format}
                 onFormatChange={updateFormat}
               />
-            </div>
+            </CollapsibleSection>
           </div>
         )}
 

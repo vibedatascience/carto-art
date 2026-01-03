@@ -4,7 +4,7 @@ import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { usePosterConfig } from '@/hooks/usePosterConfig';
 import { useSavedProjects } from '@/hooks/useSavedProjects';
 import { useMapExport } from '@/hooks/useMapExport';
-import { Maximize, Plus, Minus, Undo2, Redo2 } from 'lucide-react';
+import { Maximize, Plus, Minus, Undo2, Redo2, Share2, Save, Check, Download, Loader2 } from 'lucide-react';
 import { MapPreview } from '@/components/map/MapPreview';
 import { TextOverlay } from '@/components/map/TextOverlay';
 import { ExportButton } from '@/components/controls/ExportButton';
@@ -22,10 +22,15 @@ import { getMapById } from '@/lib/actions/maps';
 import { isConfigEqual, cloneConfig } from '@/lib/utils/configComparison';
 import type { SavedProject, PosterConfig } from '@/types/poster';
 import { generateThumbnail } from '@/lib/export/thumbnail';
+import { encodeConfig } from '@/lib/config/url-state';
+import { EXPORT_RESOLUTIONS, type ExportResolutionKey } from '@/lib/export/constants';
 
 export function PosterEditor() {
-  const [activeTab, setActiveTab] = useState<Tab>('location');
+  const [activeTab, setActiveTab] = useState<Tab>('design');
   const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [quickSaved, setQuickSaved] = useState(false);
+  const [exportResolution, setExportResolution] = useState<ExportResolutionKey>('SMALL');
 
   const { 
     config, 
@@ -70,11 +75,35 @@ export function PosterEditor() {
   // Wrap exportToPNG to handle errors
   const handleExport = useCallback(async () => {
     try {
-      await exportToPNG();
+      await exportToPNG({ resolution: EXPORT_RESOLUTIONS[exportResolution] });
     } catch (error) {
       handleError(error);
     }
-  }, [exportToPNG, handleError]);
+  }, [exportToPNG, handleError, exportResolution]);
+
+  // Copy share link to clipboard
+  const handleShare = useCallback(async () => {
+    const encoded = encodeConfig(config);
+    const url = `${window.location.origin}/?s=${encoded}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [config]);
+
+  // Quick save to localStorage
+  const handleQuickSave = useCallback(() => {
+    const savedMaps = JSON.parse(localStorage.getItem('cartoart-saved-maps') || '[]');
+    const newMap = {
+      id: Date.now().toString(),
+      name: config.location.name || 'Untitled Map',
+      config,
+      createdAt: Date.now(),
+    };
+    savedMaps.unshift(newMap);
+    localStorage.setItem('cartoart-saved-maps', JSON.stringify(savedMaps.slice(0, 50)));
+    setQuickSaved(true);
+    setTimeout(() => setQuickSaved(false), 2000);
+  }, [config]);
 
   // Handle loading a saved project
   const handleLoadProject = useCallback(async (project: SavedProject) => {
@@ -207,7 +236,12 @@ export function PosterEditor() {
           <span className="font-bold text-gray-900 dark:text-white">CartoArt</span>
         </Link>
         <div className="flex items-center gap-2">
-          <ExportButton onExport={handleExport} isExporting={isExporting} />
+          <ExportButton
+            onExport={handleExport}
+            isExporting={isExporting}
+            selectedResolution={exportResolution}
+            onResolutionChange={setExportResolution}
+          />
         </div>
       </div>
 
@@ -276,7 +310,45 @@ export function PosterEditor() {
               <Redo2 className="w-4 h-4" />
             </button>
           </div>
-          <ExportButton onExport={handleExport} isExporting={isExporting} />
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+            title="Copy share link"
+          >
+            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+            {copied ? 'Copied!' : 'Share'}
+          </button>
+          <button
+            onClick={handleQuickSave}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+            title="Quick save to browser"
+          >
+            {quickSaved ? <Check className="w-4 h-4 text-green-500" /> : <Save className="w-4 h-4" />}
+            {quickSaved ? 'Saved!' : 'Save'}
+          </button>
+          <div className="flex items-center shadow-sm">
+            <select
+              value={exportResolution}
+              onChange={(e) => setExportResolution(e.target.value as ExportResolutionKey)}
+              className="h-9 text-xs rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            >
+              {Object.entries(EXPORT_RESOLUTIONS).map(([key, res]) => (
+                <option key={key} value={key}>{res.name}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="inline-flex items-center gap-2 px-4 h-9 text-sm rounded-r-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+            >
+              {isExporting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              Export
+            </button>
+          </div>
         </div>
 
         {/* Map Canvas */}
@@ -314,6 +386,8 @@ export function PosterEditor() {
                 onMove={handleMapMove}
                 layers={config.layers}
                 layerToggles={config.style.layerToggles}
+                camera={config.camera}
+                areaHighlight={config.areaHighlight}
               />
               
               {/* Floating Map Controls */}

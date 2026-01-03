@@ -7,7 +7,26 @@
       "Bash(do grep -n \"const layerToggles\" \"C:\\\\Users\\\\Kyle\\\\Documents\\\\code\\\\carto-art\\\\frontend\\\\lib\\\\styles$file\")",
       "Bash(echo:*)",
       "Bash(done)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node:*)",
+      "Bash(npm run dev:*)",
+      "Bash(claude mcp add chrome-devtools npx chrome-devtools-mcp@latest)",
+      "Bash(claude mcp add chrome-devtools npx chrome-devtools-mcp@latest --scope user)",
+      "Bash(xargs kill:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "shadcn"
+  ]
 }

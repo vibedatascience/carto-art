@@ -105,6 +105,7 @@ export function usePosterConfig() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isInitialized = useRef(false);
+  const hasLoadedFromUrl = useRef(false);
   const historyRef = useRef<PosterConfig[]>([]);
   const historyIndexRef = useRef(-1);
   const isUndoRedoRef = useRef(false);
@@ -112,21 +113,34 @@ export function usePosterConfig() {
   const urlUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [config, dispatch] = useReducer(posterReducer, DEFAULT_CONFIG);
-  const [shouldAutoLocate, setShouldAutoLocate] = useState(() => !searchParams.has('s'));
+  // Start with false - only enable auto-locate AFTER confirming no URL state
+  const [shouldAutoLocate, setShouldAutoLocate] = useState(false);
+  // Track if we've completed the initial load (prevents URL sync from overwriting on first render)
+  const [isReady, setIsReady] = useState(false);
 
   // Initialize from URL on mount
   useEffect(() => {
     if (isInitialized.current) return;
-    
+
     const stateParam = searchParams.get('s');
     if (stateParam) {
       const decoded = decodeConfig(stateParam);
       if (decoded) {
+        // URL has state - don't auto-locate, apply the decoded config
+        hasLoadedFromUrl.current = true;
         setShouldAutoLocate(false);
         dispatch({ type: 'SET_CONFIG', payload: { ...DEFAULT_CONFIG, ...decoded } });
+      } else {
+        // URL state was invalid - allow auto-locate
+        setShouldAutoLocate(true);
       }
+    } else {
+      // No URL state - enable auto-locate to user's location
+      setShouldAutoLocate(true);
     }
     isInitialized.current = true;
+    // Mark as ready after a brief delay to let the config update propagate
+    setTimeout(() => setIsReady(true), 100);
   }, [searchParams]);
 
   // Debounced history update function
@@ -186,7 +200,8 @@ export function usePosterConfig() {
 
   // Sync state to URL (debounced to prevent race conditions)
   useEffect(() => {
-    if (!isInitialized.current || isUpdatingUrlRef.current) return;
+    // Don't sync until fully ready (prevents overwriting URL on initial load)
+    if (!isReady || isUpdatingUrlRef.current) return;
 
     // Clear any pending URL update
     if (urlUpdateTimeoutRef.current) {
@@ -198,13 +213,13 @@ export function usePosterConfig() {
     urlUpdateTimeoutRef.current = setTimeout(() => {
       const encoded = encodeConfig(config);
       const params = new URLSearchParams(searchParams.toString());
-      
+
       // Only update if the encoded state is different from what's in the URL
       if (params.get('s') !== encoded) {
         isUpdatingUrlRef.current = true;
         params.set('s', encoded);
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-        
+
         // Reset flag after a short delay to allow router to update
         setTimeout(() => {
           isUpdatingUrlRef.current = false;
@@ -219,7 +234,7 @@ export function usePosterConfig() {
         urlUpdateTimeoutRef.current = null;
       }
     };
-  }, [config, pathname, router, searchParams]);
+  }, [config, pathname, router, searchParams, isReady]);
 
   const setConfig = useCallback((config: PosterConfig) => {
     setShouldAutoLocate(false);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import { Button } from '@/components/ui/control-components';
 import { useRouter } from 'next/navigation';
 import {
@@ -47,14 +47,16 @@ export function AccountPanel({
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
       setLoading(false);
-    });
+    };
+    fetchUser();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: unknown, session: Session | null) => {
       setUser(session?.user ?? null);
     });
 

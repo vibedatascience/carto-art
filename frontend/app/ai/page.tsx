@@ -1,19 +1,22 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Loader2, Sparkles, MapPin, Palette, Type, Layers, Layout, Download, ArrowLeft, RotateCcw, Wand2, ChevronDown, ChevronUp, Code } from 'lucide-react';
+import { Send, Loader2, Sparkles, MapPin, Palette, Type, Layers, Layout, Download, ArrowLeft, RotateCcw, Wand2, ChevronDown, ChevronUp, Code, Share2, Save, Check, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { MapPreview } from '@/components/map/MapPreview';
 import { TextOverlay } from '@/components/map/TextOverlay';
 import { applyPaletteToStyle } from '@/lib/styles/applyPalette';
 import { applyAIConfig, type AIGeneratedConfig } from '@/lib/ai/applyAIConfig';
 import { DEFAULT_CONFIG } from '@/lib/config/defaults';
-import { encodeConfig } from '@/lib/config/url-state';
+import { encodeConfig, decodeConfig } from '@/lib/config/url-state';
+import { useSearchParams } from 'next/navigation';
+import { EXPORT_RESOLUTIONS, type ExportResolutionKey } from '@/lib/export/constants';
 import { getNumericRatio, getAspectRatioCSS } from '@/lib/styles/dimensions';
 import { useMapExport } from '@/hooks/useMapExport';
 import { cn } from '@/lib/utils';
 import type { PosterConfig } from '@/types/poster';
 import type MapLibreGL from 'maplibre-gl';
+import { getRandomPrompts } from '@/lib/ai/prompts';
 
 interface Message {
   id: string;
@@ -23,21 +26,6 @@ interface Message {
   error?: boolean;
   isStreaming?: boolean;
 }
-
-const EXAMPLE_PROMPTS = [
-  "Ukiyo-e woodblock print of Kanagawa with traditional indigo and cream",
-  "3D isometric Manhattan at night with glowing amber skyscrapers, 60° pitch",
-  "Blade Runner-inspired neon map of Tokyo with hot pink and cyan",
-  "Vaporwave Miami Beach with pink sunsets and teal ocean vibes",
-  "Hand-drawn treasure map of the Caribbean on aged parchment",
-  "3D San Francisco hills with dramatic camera angle showing terrain",
-  "Infrared heat vision map of Los Angeles at night",
-  "Bauhaus geometric Berlin in primary colors - red, yellow, blue",
-  "Frozen Nordic minimalist Stockholm, barely visible pale roads",
-  "Synthwave sunset over Los Angeles with purple mountains",
-  "1920s Art Deco Manhattan in gold and black, Gatsby vibes",
-  "Gothic dark academia Oxford with sepia tones and old paper texture",
-];
 
 /**
  * Simple markdown renderer for chat messages
@@ -192,6 +180,36 @@ function SelectInput({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+/**
+ * Multi-line text input component
+ */
+function TextLinesInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+}) {
+  const textValue = value?.join('\n') || '';
+  return (
+    <div className="space-y-1">
+      <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+      <textarea
+        value={textValue}
+        onChange={(e) => onChange(e.target.value.split('\n').filter(line => line.trim()))}
+        placeholder={placeholder}
+        rows={3}
+        className="w-full text-xs px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+      />
+      <p className="text-[10px] text-gray-400">One line per entry</p>
     </div>
   );
 }
@@ -434,12 +452,18 @@ function ConfigEditor({
                   { value: 'gradient', label: 'Gradient' },
                 ]}
               />
+              <TextLinesInput
+                label="Custom Lines"
+                value={config.typography.customLines || []}
+                onChange={(v) => updateConfig('typography.customLines', v)}
+                placeholder="Where we first met&#10;June 15, 2024&#10;Forever & Always"
+              />
             </div>
           </Section>
         )}
 
         {/* Camera/3D Section */}
-        {(config.camera || config.layers?.buildings3D) && (
+        {(config.camera || config.layers?.buildings3D || config.layers?.terrain3D) && (
           <Section title="3D & Camera" icon={Layers}>
             <div className="space-y-2">
               <ToggleInput
@@ -449,12 +473,28 @@ function ConfigEditor({
               />
               {config.layers?.buildings3D && (
                 <SliderInput
-                  label="Height"
+                  label="Bldg Height"
                   value={config.layers?.buildings3DHeight || 1}
                   onChange={(v) => updateConfig('layers.buildings3DHeight', v)}
                   min={0.5}
                   max={3}
                   step={0.1}
+                  unit="x"
+                />
+              )}
+              <ToggleInput
+                label="3D Terrain"
+                value={config.layers?.terrain3D || false}
+                onChange={(v) => updateConfig('layers.terrain3D', v)}
+              />
+              {config.layers?.terrain3D && (
+                <SliderInput
+                  label="Exaggeration"
+                  value={config.layers?.terrainExaggeration || 1.5}
+                  onChange={(v) => updateConfig('layers.terrainExaggeration', v)}
+                  min={0.5}
+                  max={1000}
+                  step={1}
                   unit="x"
                 />
               )}
@@ -528,6 +568,11 @@ function ConfigEditor({
                 label="POIs"
                 value={config.layers.pois !== false}
                 onChange={(v) => updateConfig('layers.pois', v)}
+              />
+              <ToggleInput
+                label="Population"
+                value={config.layers.population || false}
+                onChange={(v) => updateConfig('layers.population', v)}
               />
             </div>
             {config.layers.streets !== false && (
@@ -640,6 +685,47 @@ function ConfigEditor({
             </div>
           </Section>
         )}
+
+        {/* Area Highlight Section - only show if AI provided coordinates */}
+        {config.areaHighlight?.coordinates && config.areaHighlight.coordinates.length >= 3 && (
+          <Section title="Area Highlight" icon={MapPin}>
+            <div className="space-y-2">
+              <ColorInput
+                label="Fill Color"
+                value={config.areaHighlight.fillColor || '#ff6b6b'}
+                onChange={(v) => updateConfig('areaHighlight.fillColor', v)}
+              />
+              <SliderInput
+                label="Fill Opacity"
+                value={config.areaHighlight.fillOpacity ?? 0.3}
+                onChange={(v) => updateConfig('areaHighlight.fillOpacity', v)}
+                min={0}
+                max={1}
+                step={0.1}
+              />
+              <ColorInput
+                label="Stroke Color"
+                value={config.areaHighlight.strokeColor || config.areaHighlight.fillColor || '#ff6b6b'}
+                onChange={(v) => updateConfig('areaHighlight.strokeColor', v)}
+              />
+              <SliderInput
+                label="Stroke Width"
+                value={config.areaHighlight.strokeWidth ?? 2}
+                onChange={(v) => updateConfig('areaHighlight.strokeWidth', v)}
+                min={1}
+                max={5}
+                step={0.5}
+                unit="px"
+              />
+              <button
+                onClick={() => updateConfig('areaHighlight', undefined)}
+                className="text-xs text-red-500 hover:text-red-700"
+              >
+                Remove Highlight
+              </button>
+            </div>
+          </Section>
+        )}
       </div>
 
       {/* Show JSON toggle */}
@@ -667,10 +753,56 @@ export default function AIPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [config, setConfig] = useState<PosterConfig>(DEFAULT_CONFIG);
   const [showExamples, setShowExamples] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [exportResolution, setExportResolution] = useState<ExportResolutionKey>('PREVIEW');
+  const [examplePrompts, setExamplePrompts] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // Generate random prompts on mount (client-side only)
+  useEffect(() => {
+    setExamplePrompts(getRandomPrompts(10));
+  }, []);
+
   const { isExporting, exportToPNG, setMapRef } = useMapExport(config);
+  const searchParams = useSearchParams();
+
+  // Load config from URL on mount
+  useEffect(() => {
+    const encoded = searchParams.get('s');
+    if (encoded) {
+      const decoded = decodeConfig(encoded);
+      if (decoded) {
+        setConfig({ ...DEFAULT_CONFIG, ...decoded } as PosterConfig);
+        setShowExamples(false);
+      }
+    }
+  }, [searchParams]);
+
+  // Copy share link to clipboard (links to editor page)
+  const handleShare = useCallback(async () => {
+    const encoded = encodeConfig(config);
+    const url = `${window.location.origin}/?s=${encoded}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [config]);
+
+  // Save to localStorage
+  const handleSave = useCallback(() => {
+    const saved = JSON.parse(localStorage.getItem('cartoart-saved-maps') || '[]');
+    const newMap = {
+      id: Date.now().toString(),
+      name: config.location.name || 'Untitled Map',
+      config,
+      createdAt: Date.now(),
+    };
+    saved.unshift(newMap);
+    localStorage.setItem('cartoart-saved-maps', JSON.stringify(saved.slice(0, 50))); // Keep last 50
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }, [config]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -867,7 +999,7 @@ export default function AIPage() {
               </div>
 
               <div className="grid gap-2">
-                {EXAMPLE_PROMPTS.map((prompt, i) => (
+                {examplePrompts.map((prompt, i) => (
                   <button
                     key={i}
                     onClick={() => handleExampleClick(prompt)}
@@ -879,6 +1011,14 @@ export default function AIPage() {
                   </button>
                 ))}
               </div>
+
+              <button
+                onClick={() => setExamplePrompts(getRandomPrompts(10))}
+                className="mx-auto flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Show different ideas
+              </button>
             </div>
           )}
 
@@ -985,22 +1125,50 @@ export default function AIPage() {
           <div className="flex items-center gap-2">
             <Link
               href={`/?s=${encodeConfig(config)}`}
-              className="px-3 py-1.5 text-sm rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
             >
+              <ExternalLink className="w-4 h-4" />
               Open in Editor
             </Link>
             <button
-              onClick={exportToPNG}
-              disabled={isExporting}
-              className="inline-flex items-center gap-2 px-4 py-1.5 text-sm rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors disabled:opacity-50"
+              onClick={handleShare}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+              title="Copy share link"
             >
-              {isExporting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4" />
-              )}
-              Export
+              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
+              {copied ? 'Copied!' : 'Share'}
             </button>
+            <button
+              onClick={handleSave}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+              title="Quick save to browser"
+            >
+              {saved ? <Check className="w-4 h-4 text-green-500" /> : <Save className="w-4 h-4" />}
+              {saved ? 'Saved!' : 'Save'}
+            </button>
+            <div className="flex items-center shadow-sm">
+              <select
+                value={exportResolution}
+                onChange={(e) => setExportResolution(e.target.value as ExportResolutionKey)}
+                className="h-9 text-xs rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                {Object.entries(EXPORT_RESOLUTIONS).map(([key, res]) => (
+                  <option key={key} value={key}>{res.name}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => exportToPNG({ resolution: EXPORT_RESOLUTIONS[exportResolution] })}
+                disabled={isExporting}
+                className="inline-flex items-center gap-2 px-4 h-9 text-sm rounded-r-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                {isExporting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                Export
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1039,6 +1207,7 @@ export default function AIPage() {
                 layers={config.layers}
                 layerToggles={config.style.layerToggles}
                 camera={config.camera}
+                areaHighlight={config.areaHighlight}
               />
             </div>
 
