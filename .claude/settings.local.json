@@ -31,7 +31,10 @@
       "mcp__chrome-devtools__list_pages",
       "mcp__chrome-devtools__press_key",
       "Bash(tree:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(xcodebuild -version:*)",
+      "Bash(xcode-select:*)",
+      "Bash(STATIC_EXPORT=true npm run build:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

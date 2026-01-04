@@ -1,14 +1,19 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// Set to your production URL, or use localhost for development
+const PRODUCTION_URL = 'https://cartistry.app'; // Update this to your deployed URL
+const DEV_URL = 'http://localhost:3000';
+const USE_PRODUCTION = process.env.NODE_ENV === 'production';
+
 const config: CapacitorConfig = {
   appId: 'com.cartistry.app',
   appName: 'Cartistry',
   webDir: 'www',
   server: {
-    // For development, use the Next.js dev server
-    // Comment this out for production builds
-    // url: 'http://localhost:3000',
-    // cleartext: true,
+    // For MVP: Load from deployed website (includes all API routes)
+    // This avoids the static export limitation with API routes
+    url: USE_PRODUCTION ? PRODUCTION_URL : DEV_URL,
+    cleartext: !USE_PRODUCTION, // Allow HTTP for localhost dev
 
     // Production settings
     androidScheme: 'https',

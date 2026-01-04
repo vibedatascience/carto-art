@@ -4,13 +4,11 @@
   "description": "Cartistry - Map Poster Generator iOS App",
   "main": "index.js",
   "scripts": {
-    "build:web": "cd ../frontend && npm run export:ios && cp -r out ../ios-app/www",
     "sync": "npx cap sync ios",
     "open": "npx cap open ios",
-    "build": "npm run build:web && npm run sync",
-    "dev": "npm run build && npm run open",
     "init": "npx cap add ios",
-    "clean": "rm -rf www ios/App/Pods"
+    "dev": "npm run sync && npm run open",
+    "clean": "rm -rf ios/App/Pods"
   },
   "dependencies": {
     "@capacitor/app": "^6.0.0",

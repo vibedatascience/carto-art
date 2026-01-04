@@ -1,11 +1,20 @@
 # Cartistry iOS App
 
-Native iOS app for Cartistry - the Map Poster Generator. Built with Capacitor to wrap the Next.js web app in a native iOS shell.
+Native iOS app for Cartistry - the Map Poster Generator. Built with Capacitor to wrap the web app in a native iOS shell with access to native features.
+
+## Architecture
+
+This iOS app uses a **WebView approach** - it loads your deployed Cartistry website inside a native iOS container. This provides:
+
+- **Full functionality** - All features work including AI generation, geocoding, auth
+- **Native enhancements** - Share sheet, haptic feedback, status bar control
+- **Easy updates** - Deploy web changes without App Store review
+- **Minimal maintenance** - One codebase for web and iOS
 
 ## Prerequisites
 
 - **Node.js** 18+ and npm
-- **Xcode** 15+ (with Command Line Tools)
+- **Xcode** 15+ (from Mac App Store)
 - **CocoaPods** (`sudo gem install cocoapods`)
 - **Apple Developer Account** (for device testing and App Store)
 
@@ -14,64 +23,54 @@ Native iOS app for Cartistry - the Map Poster Generator. Built with Capacitor to
 ### 1. Install Dependencies
 
 ```bash
-# In ios-app directory
+cd ios-app
 npm install
-
-# In frontend directory (if not already done)
-cd ../frontend && npm install
 ```
 
-### 2. Initialize iOS Project
+### 2. Configure Your URL
 
-```bash
-# First time only - creates the ios/ folder with Xcode project
-npm run init
+Edit `capacitor.config.ts` and set your production URL:
+
+```typescript
+const PRODUCTION_URL = 'https://your-domain.com'; // Your deployed site
 ```
 
-### 3. Build and Open in Xcode
+### 3. Initialize iOS Project
 
 ```bash
-# Build web assets and sync to iOS
-npm run build
+npm run init   # Creates ios/ folder with Xcode project
+npm run sync   # Syncs configuration to Xcode
+```
 
-# Open in Xcode
+### 4. Open in Xcode
+
+```bash
 npm run open
 ```
 
-### 4. Run on Simulator/Device
+### 5. Run the App
 
 In Xcode:
-1. Select a simulator or connected device
+1. Select an iPhone simulator (or connected device)
 2. Click the Play button (⌘R)
 
-## Development Workflow
+## Development
 
-### Making Changes
+### Testing with Local Dev Server
 
-1. **Web changes**: Edit files in `../frontend/`
-2. **Rebuild**: Run `npm run build` in `ios-app/`
-3. **Test**: Run in Xcode simulator
-
-### Live Development (Optional)
-
-For faster iteration during development, you can point to the Next.js dev server:
-
-1. Edit `capacitor.config.ts`:
-```typescript
-server: {
-  url: 'http://localhost:3000',
-  cleartext: true,
-}
-```
-
-2. Start the Next.js dev server:
+1. Start your Next.js dev server:
 ```bash
 cd ../frontend && npm run dev
 ```
 
-3. Run the iOS app - it will load from localhost
+2. The app will load from `http://localhost:3000` by default in development mode.
 
-> **Note**: Remember to remove/comment the `server.url` config before building for production!
+### Testing with Production
+
+Set `NODE_ENV=production` before syncing:
+```bash
+NODE_ENV=production npm run sync
+```
 
 ## Project Structure
 
@@ -82,9 +81,8 @@ ios-app/
 │       ├── App/            # Swift source files
 │       ├── App.xcodeproj   # Xcode project
 │       └── Podfile         # CocoaPods dependencies
-├── www/                    # Built web assets (from frontend)
+├── www/                    # Placeholder (app loads from URL)
 ├── src/                    # Native bridge utilities
-│   └── native-bridge.ts    # Capacitor plugin wrappers
 ├── capacitor.config.ts     # Capacitor configuration
 └── package.json
 ```
@@ -103,25 +101,20 @@ The app includes these Capacitor plugins:
 | `@capacitor/filesystem` | Save exports to device |
 | `@capacitor/keyboard` | Keyboard handling |
 
-### Using Native Features in Frontend
+### Using in Frontend Code
 
-Import the platform hook:
+The frontend automatically detects when running in the iOS app:
 
 ```typescript
 import { useNativePlatform } from '@/hooks/useNativePlatform';
 
-function ExportButton() {
+function MyComponent() {
   const { isNative, share, hapticSuccess } = useNativePlatform();
 
-  const handleExport = async () => {
-    const dataUrl = await generatePoster();
-
+  const handleShare = async () => {
     if (isNative) {
       await hapticSuccess();
-      await share(dataUrl, 'My Map Poster');
-    } else {
-      // Web download fallback
-      downloadImage(dataUrl);
+      await share(imageDataUrl, 'My Map');
     }
   };
 }
@@ -134,47 +127,25 @@ function ExportButton() {
 1. Open `ios/App/App.xcodeproj` in Xcode
 2. Select the "App" target
 3. Go to "Signing & Capabilities"
-4. Select your Team and configure Bundle Identifier
+4. Select your Team and Bundle Identifier
 
 ### 2. Update App Info
 
 Edit `ios/App/App/Info.plist`:
-- `CFBundleDisplayName`: App name on home screen
-- `CFBundleShortVersionString`: Version (e.g., "1.0.0")
-- `CFBundleVersion`: Build number (e.g., "1")
+- `CFBundleDisplayName`: "Cartistry"
+- `CFBundleShortVersionString`: "1.0.0"
+- `CFBundleVersion`: "1"
 
 ### 3. Add App Icons
 
 Replace icons in `ios/App/App/Assets.xcassets/AppIcon.appiconset/`
 
+Use [App Icon Generator](https://appicon.co/) to create all sizes from a 1024x1024 source.
+
 ### 4. Build Archive
 
 1. In Xcode: Product → Archive
 2. In Organizer: Distribute App → App Store Connect
-
-## Customization
-
-### App Icon
-
-1. Create icon at 1024x1024px
-2. Use a tool like [App Icon Generator](https://appicon.co/)
-3. Replace files in `ios/App/App/Assets.xcassets/AppIcon.appiconset/`
-
-### Splash Screen
-
-Edit in `ios/App/App/Assets.xcassets/Splash.imageset/` or configure in Xcode's LaunchScreen.storyboard
-
-### Status Bar
-
-Configured in `capacitor.config.ts`:
-```typescript
-plugins: {
-  StatusBar: {
-    style: 'dark', // or 'light'
-    backgroundColor: '#000000',
-  },
-}
-```
 
 ## Troubleshooting
 
@@ -183,32 +154,25 @@ plugins: {
 cd ios/App && pod install
 ```
 
-### Build fails after updating plugins
-```bash
-npm run clean
-npm run build
-cd ios/App && pod install --repo-update
-```
-
 ### White screen on launch
-- Check that `www/` directory has content
-- Verify `webDir` in `capacitor.config.ts` matches
+- Check that your server URL is accessible
+- Verify no network/CORS issues in Safari developer tools
 
-### Map not loading
-- Ensure network permissions in Info.plist
-- Check for mixed content issues (HTTP vs HTTPS)
+### App rejected for "web wrapper"
+Apple may reject apps that are purely web wrappers. To avoid rejection:
+- Emphasize native features (share sheet, haptics)
+- Ensure offline functionality where possible
+- Add unique iOS-specific features
 
-## Scripts Reference
+## Scripts
 
 | Script | Description |
 |--------|-------------|
-| `npm run build:web` | Build frontend and copy to www/ |
-| `npm run sync` | Sync web assets to iOS project |
-| `npm run build` | Full build (web + sync) |
-| `npm run open` | Open Xcode project |
-| `npm run dev` | Build and open Xcode |
 | `npm run init` | Initialize iOS project (first time) |
-| `npm run clean` | Remove build artifacts |
+| `npm run sync` | Sync config to Xcode |
+| `npm run open` | Open Xcode project |
+| `npm run dev` | Sync and open Xcode |
+| `npm run clean` | Remove CocoaPods cache |
 
 ## License
 
