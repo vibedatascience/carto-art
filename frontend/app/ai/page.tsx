@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Send, Loader2, Sparkles, MapPin, Palette, Type, Layers, Layout, Download, ArrowLeft, RotateCcw, Wand2, ChevronDown, ChevronUp, Code, Share2, Save, Check, ExternalLink } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback, useMemo, Suspense } from 'react';
+import { Send, Loader2, Sparkles, MapPin, Palette, Type, Layers, Layout, Download, RotateCcw, Wand2, ChevronDown, ChevronUp, Code, Share2, Save, Check, ExternalLink, Grid, Sliders, User, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
+import { SmartColorPicker, RoadGradientPicker } from '@/components/ui/SmartColorPicker';
+import { Logo } from '@/components/ui/Logo';
 import Link from 'next/link';
 import { MapPreview } from '@/components/map/MapPreview';
 import { TextOverlay } from '@/components/map/TextOverlay';
@@ -82,32 +85,31 @@ function renderMarkdown(text: string): React.ReactNode {
 }
 
 /**
- * Color picker input component
+ * Color picker input component - now uses SmartColorPicker
  */
-function ColorInput({
+function ColorInputField({
   label,
   value,
-  onChange
+  onChange,
+  category = 'accent',
+  paletteColors = [],
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  category?: string;
+  paletteColors?: string[];
 }) {
   return (
     <div className="flex items-center gap-2">
-      <input
-        type="color"
-        value={value || '#000000'}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-6 h-6 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
-      />
-      <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[70px]">{label}</span>
-      <input
-        type="text"
+      <span className="text-[10px] text-gray-500 dark:text-gray-400 min-w-[55px]">{label}</span>
+      <SmartColorPicker
         value={value || ''}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono"
-        placeholder="#000000"
+        onChange={onChange}
+        category={category}
+        label={label}
+        paletteColors={paletteColors}
+        className="flex-1"
       />
     </div>
   );
@@ -134,8 +136,8 @@ function SliderInput({
   unit?: string;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[70px]">{label}</span>
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] text-gray-500 dark:text-gray-400 min-w-[50px]">{label}</span>
       <input
         type="range"
         value={value}
@@ -143,9 +145,9 @@ function SliderInput({
         min={min}
         max={max}
         step={step}
-        className="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+        className="flex-1 h-1 bg-gray-200 dark:bg-gray-700 rounded appearance-none cursor-pointer accent-gray-600"
       />
-      <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[40px] text-right font-mono">
+      <span className="text-[10px] text-gray-400 min-w-[30px] text-right font-mono">
         {value}{unit}
       </span>
     </div>
@@ -167,12 +169,12 @@ function SelectInput({
   options: { value: string; label: string }[];
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-600 dark:text-gray-400 min-w-[70px]">{label}</span>
+    <div className="flex items-center gap-1.5">
+      <span className="text-[10px] text-gray-500 dark:text-gray-400 min-w-[50px]">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+        className="flex-1 text-[10px] px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700 bg-transparent text-gray-700 dark:text-gray-300"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -200,16 +202,15 @@ function TextLinesInput({
 }) {
   const textValue = value?.join('\n') || '';
   return (
-    <div className="space-y-1">
-      <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+    <div className="space-y-0.5">
+      <span className="text-[10px] text-gray-500 dark:text-gray-400">{label}</span>
       <textarea
         value={textValue}
         onChange={(e) => onChange(e.target.value.split('\n').filter(line => line.trim()))}
         placeholder={placeholder}
-        rows={3}
-        className="w-full text-xs px-2 py-1.5 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 resize-none"
+        rows={2}
+        className="w-full text-[10px] px-1.5 py-1 rounded border border-gray-200 dark:border-gray-700 bg-transparent text-gray-700 dark:text-gray-300 resize-none"
       />
-      <p className="text-[10px] text-gray-400">One line per entry</p>
     </div>
   );
 }
@@ -228,18 +229,18 @@ function ToggleInput({
 }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-xs text-gray-600 dark:text-gray-400">{label}</span>
+      <span className="text-[10px] text-gray-500 dark:text-gray-400">{label}</span>
       <button
         onClick={() => onChange(!value)}
         className={cn(
-          "w-8 h-4 rounded-full transition-colors relative",
-          value ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-600"
+          "w-6 h-3 rounded-full transition-colors relative",
+          value ? "bg-gray-700 dark:bg-gray-300" : "bg-gray-300 dark:bg-gray-600"
         )}
       >
         <div
           className={cn(
-            "absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-transform",
-            value ? "translate-x-4" : "translate-x-0.5"
+            "absolute top-0.5 w-2 h-2 rounded-full bg-white dark:bg-gray-900 shadow transition-transform",
+            value ? "translate-x-3.5" : "translate-x-0.5"
           )}
         />
       </button>
@@ -264,18 +265,18 @@ function Section({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+    <div className="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
+        className="w-full flex items-center justify-between py-1.5 text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
       >
-        <span className="flex items-center gap-2">
-          <Icon className="w-3.5 h-3.5" />
+        <span className="flex items-center gap-1.5">
+          <Icon className="w-3 h-3" />
           {title}
         </span>
-        {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
       </button>
-      {isOpen && <div className="pb-3 space-y-2">{children}</div>}
+      {isOpen && <div className="pb-2 space-y-1.5">{children}</div>}
     </div>
   );
 }
@@ -328,55 +329,80 @@ function ConfigEditor({
         {config.customPalette && (
           <Section title="Colors" icon={Palette} defaultOpen={true}>
             <div className="space-y-2">
-              <ColorInput
+              <ColorInputField
                 label="Background"
                 value={config.customPalette.background}
                 onChange={(v) => updateConfig('customPalette.background', v)}
+                category="background"
               />
-              <ColorInput
+              <ColorInputField
                 label="Text"
                 value={config.customPalette.text}
                 onChange={(v) => updateConfig('customPalette.text', v)}
+                category="text"
               />
-              <ColorInput
+              <ColorInputField
                 label="Water"
                 value={config.customPalette.water}
                 onChange={(v) => updateConfig('customPalette.water', v)}
+                category="water"
               />
-              <ColorInput
+              <ColorInputField
                 label="Parks"
                 value={config.customPalette.greenSpace}
                 onChange={(v) => updateConfig('customPalette.greenSpace', v)}
+                category="greenSpace"
               />
-              <ColorInput
+              <ColorInputField
                 label="Buildings"
                 value={config.customPalette.buildings || config.customPalette.background}
                 onChange={(v) => updateConfig('customPalette.buildings', v)}
+                category="buildings"
               />
 
               {/* Roads subsection */}
               <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Roads</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Roads</p>
+                  <RoadGradientPicker
+                    roads={{
+                      motorway: config.customPalette.roads?.motorway || '#ffffff',
+                      trunk: config.customPalette.roads?.trunk || '#e0e0e0',
+                      primary: config.customPalette.roads?.primary || '#c0c0c0',
+                      secondary: config.customPalette.roads?.secondary || '#a0a0a0',
+                      tertiary: config.customPalette.roads?.tertiary || '#808080',
+                      residential: config.customPalette.roads?.residential || '#606060',
+                      service: config.customPalette.roads?.service || '#404040',
+                    }}
+                    onChange={(roads) => {
+                      updateConfig('customPalette.roads', roads);
+                    }}
+                  />
+                </div>
                 <div className="space-y-1.5">
-                  <ColorInput
+                  <ColorInputField
                     label="Motorway"
                     value={config.customPalette.roads?.motorway || ''}
                     onChange={(v) => updateConfig('customPalette.roads.motorway', v)}
+                    category="roads"
                   />
-                  <ColorInput
+                  <ColorInputField
                     label="Primary"
                     value={config.customPalette.roads?.primary || ''}
                     onChange={(v) => updateConfig('customPalette.roads.primary', v)}
+                    category="roads"
                   />
-                  <ColorInput
+                  <ColorInputField
                     label="Secondary"
                     value={config.customPalette.roads?.secondary || ''}
                     onChange={(v) => updateConfig('customPalette.roads.secondary', v)}
+                    category="roads"
                   />
-                  <ColorInput
+                  <ColorInputField
                     label="Residential"
                     value={config.customPalette.roads?.residential || ''}
                     onChange={(v) => updateConfig('customPalette.roads.residential', v)}
+                    category="roads"
                   />
                 </div>
               </div>
@@ -690,10 +716,11 @@ function ConfigEditor({
         {config.areaHighlight?.coordinates && config.areaHighlight.coordinates.length >= 3 && (
           <Section title="Area Highlight" icon={MapPin}>
             <div className="space-y-2">
-              <ColorInput
+              <ColorInputField
                 label="Fill Color"
                 value={config.areaHighlight.fillColor || '#ff6b6b'}
                 onChange={(v) => updateConfig('areaHighlight.fillColor', v)}
+                category="accent"
               />
               <SliderInput
                 label="Fill Opacity"
@@ -703,10 +730,11 @@ function ConfigEditor({
                 max={1}
                 step={0.1}
               />
-              <ColorInput
+              <ColorInputField
                 label="Stroke Color"
                 value={config.areaHighlight.strokeColor || config.areaHighlight.fillColor || '#ff6b6b'}
                 onChange={(v) => updateConfig('areaHighlight.strokeColor', v)}
+                category="accent"
               />
               <SliderInput
                 label="Stroke Width"
@@ -747,7 +775,7 @@ function ConfigEditor({
   );
 }
 
-export default function AIPage() {
+function AIPageContent() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -759,6 +787,7 @@ export default function AIPage() {
   const [examplePrompts, setExamplePrompts] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   // Generate random prompts on mount (client-side only)
   useEffect(() => {
@@ -791,7 +820,7 @@ export default function AIPage() {
 
   // Save to localStorage
   const handleSave = useCallback(() => {
-    const saved = JSON.parse(localStorage.getItem('cartoart-saved-maps') || '[]');
+    const saved = JSON.parse(localStorage.getItem('cartistry-saved-maps') || '[]');
     const newMap = {
       id: Date.now().toString(),
       name: config.location.name || 'Untitled Map',
@@ -799,7 +828,7 @@ export default function AIPage() {
       createdAt: Date.now(),
     };
     saved.unshift(newMap);
-    localStorage.setItem('cartoart-saved-maps', JSON.stringify(saved.slice(0, 50))); // Keep last 50
+    localStorage.setItem('cartistry-saved-maps', JSON.stringify(saved.slice(0, 50))); // Keep last 50
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }, [config]);
@@ -952,72 +981,117 @@ export default function AIPage() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Left Panel - Chat */}
-      <div className="w-full md:w-[480px] flex flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        {/* Header */}
-        <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-center gap-3">
+      {/* Sidebar Navigation - Same as main editor */}
+      <nav className="fixed bottom-0 left-0 right-0 h-14 md:relative md:h-full md:w-14 bg-white dark:bg-gray-900 border-t md:border-t-0 md:border-r border-gray-100 dark:border-gray-800 flex md:flex-col items-center z-50 pb-safe md:pb-0">
+        <div className="hidden md:flex h-14 items-center justify-center w-full">
+          <Link href="/" title="Cartistry">
+            <Logo size="md" />
+          </Link>
+        </div>
+
+        <div className="flex md:flex-col flex-1 md:flex-none md:w-full">
+          <Link
+            href="/ai"
+            className="flex-1 md:w-full flex flex-col items-center justify-center py-3 md:py-4 px-2 transition-all relative text-gray-900 dark:text-white"
+            title="AI"
+          >
+            <Sparkles className="w-5 h-5" strokeWidth={2} />
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-gray-900 dark:bg-white rounded-full hidden md:block" />
+          </Link>
+          <Link
+            href="/?tab=library"
+            className="flex-1 md:w-full flex flex-col items-center justify-center py-3 md:py-4 px-2 transition-all relative text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            title="Library"
+          >
+            <Grid className="w-5 h-5" strokeWidth={1.5} />
+          </Link>
+          <Link
+            href="/?tab=design"
+            className="flex-1 md:w-full flex flex-col items-center justify-center py-3 md:py-4 px-2 transition-all relative text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            title="Design"
+          >
+            <Sliders className="w-5 h-5" strokeWidth={1.5} />
+          </Link>
+          <div className="md:hidden flex-1">
             <Link
-              href="/"
-              className="p-2 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              href="/?tab=account"
+              className="w-full h-full flex flex-col items-center justify-center py-3 px-2 transition-all relative text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+              title="Account"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <User className="w-5 h-5" strokeWidth={1.5} />
             </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h1 className="font-semibold text-gray-900 dark:text-white">AI Map Creator</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Powered by Claude</p>
-              </div>
-            </div>
+          </div>
+        </div>
+
+        <div className="hidden md:flex md:flex-col md:w-full md:mt-auto md:mb-2">
+          {/* Theme Toggle */}
+          <button
+            onClick={toggleTheme}
+            className="w-full flex flex-col items-center justify-center py-4 px-2 transition-all text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            title={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {resolvedTheme === 'dark' ? (
+              <Sun className="w-5 h-5" strokeWidth={1.5} />
+            ) : (
+              <Moon className="w-5 h-5" strokeWidth={1.5} />
+            )}
+          </button>
+          <Link
+            href="/?tab=account"
+            className="w-full flex flex-col items-center justify-center py-4 px-2 transition-all relative text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            title="Account"
+          >
+            <User className="w-5 h-5" strokeWidth={1.5} />
+          </Link>
+        </div>
+      </nav>
+
+      {/* Left Panel - Chat */}
+      <div className="w-full md:w-[320px] flex flex-col border-r border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+        {/* Header */}
+        <header className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-gray-400" />
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">AI Creator</span>
           </div>
           <button
             onClick={resetConversation}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
-            title="Start new conversation"
+            className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-400"
+            title="Reset"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </header>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
           {showExamples && messages.length === 0 && (
-            <div className="space-y-4">
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center">
-                  <Wand2 className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  Create Your Map with AI
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 max-w-sm mx-auto">
-                  Describe the map poster you want to create and I&apos;ll generate it for you. Try one of these examples:
+            <div className="space-y-3">
+              <div className="text-center py-4">
+                <Wand2 className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Describe your map or try an example:
                 </p>
               </div>
 
-              <div className="grid gap-2">
+              <div className="space-y-1">
                 {examplePrompts.map((prompt, i) => (
                   <button
                     key={i}
                     onClick={() => handleExampleClick(prompt)}
-                    className="text-left p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors text-sm text-gray-700 dark:text-gray-300"
+                    className="w-full text-left px-2.5 py-2 rounded text-[11px] text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
-                    <span className="text-purple-600 dark:text-purple-400">&ldquo;</span>
                     {prompt}
-                    <span className="text-purple-600 dark:text-purple-400">&rdquo;</span>
                   </button>
                 ))}
               </div>
 
               <button
                 onClick={() => setExamplePrompts(getRandomPrompts(10))}
-                className="mx-auto flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 transition-colors"
+                className="mx-auto flex items-center gap-1.5 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
-                <RotateCcw className="w-4 h-4" />
-                Show different ideas
+                <RotateCcw className="w-3 h-3" />
+                More ideas
               </button>
             </div>
           )}
@@ -1026,33 +1100,33 @@ export default function AIPage() {
             <div
               key={message.id}
               className={cn(
-                'flex gap-3',
+                'flex gap-2',
                 message.role === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
               {message.role === 'assistant' && (
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-pink-600 flex-shrink-0 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-white" />
+                <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center mt-0.5">
+                  <Sparkles className="w-2.5 h-2.5 text-gray-500" />
                 </div>
               )}
 
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-2.5',
+                  'max-w-[85%] rounded-lg px-2.5 py-1.5',
                   message.role === 'user'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                     : message.error
-                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
                 )}
               >
                 {message.isStreaming ? (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Generating your map...</span>
+                  <div className="flex items-center gap-1.5">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span className="text-xs">Generating...</span>
                   </div>
                 ) : (
-                  <div className="text-sm">{renderMarkdown(message.content)}</div>
+                  <div className="text-xs">{renderMarkdown(message.content)}</div>
                 )}
 
                 {message.config && !message.isStreaming && (
@@ -1062,95 +1136,81 @@ export default function AIPage() {
                   />
                 )}
               </div>
-
-              {message.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0 flex items-center justify-center">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                    You
-                  </span>
-                </div>
-              )}
             </div>
           ))}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-200 dark:border-gray-800 p-4">
+        <div className="border-t border-gray-100 dark:border-gray-800 p-2.5">
           <form onSubmit={handleSubmit} className="relative">
             <textarea
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Describe your map poster..."
+              placeholder="Describe your map..."
               rows={2}
-              className="w-full resize-none rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 pr-12 text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-colors"
+              className="w-full resize-none rounded border border-gray-200 dark:border-gray-700 bg-transparent px-2.5 py-2 pr-9 text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:border-gray-400 focus:outline-none transition-colors"
               disabled={isLoading}
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
               className={cn(
-                'absolute right-2 bottom-2 p-2 rounded-lg transition-colors',
+                'absolute right-1.5 bottom-1.5 p-1.5 rounded transition-colors',
                 input.trim() && !isLoading
-                  ? 'bg-purple-600 text-white hover:bg-purple-700'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
               )}
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Send className="w-5 h-5" />
+                <Send className="w-3.5 h-3.5" />
               )}
             </button>
           </form>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
-            Try: &ldquo;Make it more dramatic&rdquo; or &ldquo;Add contour lines&rdquo; to refine
-          </p>
         </div>
       </div>
 
       {/* Right Panel - Map Preview */}
       <div className="hidden md:flex flex-1 flex-col bg-gray-100 dark:bg-gray-950">
         {/* Preview Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-          <div className="flex items-center gap-2">
-            <Layers className="w-5 h-5 text-gray-500" />
-            <span className="font-medium text-gray-900 dark:text-white">Live Preview</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-              {config.style.name} • {config.palette.name}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="flex items-center gap-1.5">
+            <Layers className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {config.style.name}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Link
               href={`/?s=${encodeConfig(config)}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title="Open in Editor"
             >
-              <ExternalLink className="w-4 h-4" />
-              Open in Editor
+              <ExternalLink className="w-3.5 h-3.5" />
             </Link>
             <button
               onClick={handleShare}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
-              title="Copy share link"
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title="Share"
             >
-              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Share2 className="w-4 h-4" />}
-              {copied ? 'Copied!' : 'Share'}
+              {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Share2 className="w-3.5 h-3.5" />}
             </button>
             <button
               onClick={handleSave}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm"
-              title="Quick save to browser"
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title="Save"
             >
-              {saved ? <Check className="w-4 h-4 text-green-500" /> : <Save className="w-4 h-4" />}
-              {saved ? 'Saved!' : 'Save'}
+              {saved ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Save className="w-3.5 h-3.5" />}
             </button>
-            <div className="flex items-center shadow-sm">
+            <div className="flex items-center ml-1">
               <select
                 value={exportResolution}
                 onChange={(e) => setExportResolution(e.target.value as ExportResolutionKey)}
-                className="h-9 text-xs rounded-l-lg border border-r-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="h-7 text-[10px] rounded-l border border-r-0 border-gray-200 dark:border-gray-700 bg-transparent text-gray-600 dark:text-gray-400 px-1.5 focus:outline-none"
               >
                 {Object.entries(EXPORT_RESOLUTIONS).map(([key, res]) => (
                   <option key={key} value={key}>{res.name}</option>
@@ -1159,12 +1219,12 @@ export default function AIPage() {
               <button
                 onClick={() => exportToPNG({ resolution: EXPORT_RESOLUTIONS[exportResolution] })}
                 disabled={isExporting}
-                className="inline-flex items-center gap-2 px-4 h-9 text-sm rounded-r-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1 px-2 h-7 text-[10px] rounded-r bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
               >
                 {isExporting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3 h-3 animate-spin" />
                 ) : (
-                  <Download className="w-4 h-4" />
+                  <Download className="w-3 h-3" />
                 )}
                 Export
               </button>
@@ -1290,4 +1350,16 @@ function formatConfigSummary(config: AIGeneratedConfig): string {
   }
 
   return parts.join('\n') + '\n\n*Feel free to ask for any changes!*';
+}
+
+export default function AIPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    }>
+      <AIPageContent />
+    </Suspense>
+  );
 }

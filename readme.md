@@ -1,8 +1,6 @@
-# Map Poster Generator - Project Context
+# Map Poster Generator
 
-## Overview
-
-We're building a web application that generates beautifully stylized map posters from real geographic data. Users select a location, choose an artistic style, customize colors and typography, then export high-resolution images suitable for large-format printing.
+A web application that generates beautifully stylized map posters from real geographic data. Users select a location, choose an artistic style, customize colors and typography, then export high-resolution images suitable for large-format printing.
 
 Think of it as a cartographic art tool - turning real OpenStreetMap/terrain data into gallery-worthy prints.
 
@@ -20,360 +18,152 @@ Think of it as a cartographic art tool - turning real OpenStreetMap/terrain data
 
 ---
 
-## Core User Flow
+## Features
 
-1. **Search/Select Location** - User enters a place name or coordinates, map centers on that location
-2. **Adjust Bounds** - User can pan/zoom to frame exactly what they want on the poster
-3. **Choose Style** - Select from predefined artistic styles (see Style Library below)
-4. **Customize** - Tweak colors, toggle layers, adjust typography
-5. **Preview** - See the poster as it will appear with text overlay
-6. **Export** - Download high-DPI image (PNG/PDF) ready for printing
+### Map Styles (11 implemented)
+- **Minimal Line Art** - Clean, monochromatic streets
+- **Dark Mode/Noir** - Dramatic dark backgrounds with luminous streets
+- **Midnight Noir** - Deep night aesthetics
+- **Blueprint/Technical** - Cyan lines on blue, architectural feel
+- **Vintage/Antique** - Parchment and sepia tones
+- **Topographic/Contour** - Elevation-focused with contour styling
+- **Watercolor/Painted** - Soft, artistic washes
+- **Abstract/Artistic** - Stylized interpretation
+- **Atmospheric/Ethereal** - Misty, dreamy feel
+- **Organic/Nature** - Natural color palettes
+- **Retro/Nostalgic** - Vintage color schemes
+
+### Customization Options
+- **40+ color palettes** across all styles
+- **Typography controls** - fonts, sizes, weights, letter spacing, all-caps
+- **Layer toggles** - streets, buildings, water, parks, labels, terrain, marker
+- **Format options** - 5 aspect ratios, portrait/landscape, margins
+- **Text overlays** with backdrop options (subtle, strong, gradient)
+- **3D terrain and building extrusion**
+
+### Export
+- PNG export at multiple print resolutions:
+  - Preview (1080p)
+  - Small: 3600x5400px (12x18" @ 300 DPI)
+  - Medium: 5400x7200px (18x24" @ 300 DPI)
+  - Large: 7200x10800px (24x36" @ 300 DPI)
+  - X-Large: 9000x12000px (30x40" @ 300 DPI)
+  - XX-Large: 10800x14400px (36x48" @ 300 DPI)
+
+### AI Creator
+- Natural language map generation ("Create a vintage-style poster of Paris")
+- Chat-based interface with streaming responses
+- Interactive config editor for fine-tuning
+
+### Social Features
+- Publish maps to community feed
+- Browse and discover maps from other users
+- User profiles with map galleries
+- Comments on published maps
+- Share links for maps
 
 ---
 
 ## Tech Stack
 
-### Frontend
-- **Next.js 14+** with App Router
-- **TypeScript**
-- **Tailwind CSS** for UI styling
-- **MapLibre GL JS** for map rendering (open-source, no API key required for basic usage)
-- **React Map GL** (Maplibre fork) for React integration
-
-### Map Data Sources
-- **OpenStreetMap** via vector tiles (OpenFreeMap, MapTiler free tier, or self-hosted)
-- **Terrain/Elevation**: Mapbox Terrain RGB tiles, or open terrain tile sources
-- Consider **Protomaps** for serverless PMTiles hosting
-
-### Export Strategy
-- For high-DPI export, we'll render the map at a higher resolution than screen display
-- MapLibre's `preserveDrawingBuffer: true` enables canvas export
-- Composite the map canvas with text overlays using HTML Canvas API or a library like `html-to-image`
-- Target export sizes: up to 24x36 inches at 300 DPI (7200x10800 pixels)
+- **Framework**: Next.js 16.1.1 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4.x
+- **Map Rendering**: MapLibre GL JS 4.7.1 with React Map GL 7.1.9
+- **Database**: Supabase (PostgreSQL)
+- **AI**: Claude API
+- **Tiles**: OpenFreeMap (free, no API key required)
 
 ---
-
-## Style Library
-
-Each style is essentially a MapLibre style JSON definition plus metadata about recommended color palettes and typography.
-
-### 1. Minimal Line Art
-- Streets only, no fills
-- Monochromatic or duotone
-- Clean, modern aesthetic
-- **Good for**: Cities with interesting street patterns
-- **Typography**: Sans-serif, bold, modern (e.g., Inter, Helvetica Neue)
-
-### 2. Topographic/Contour
-- Elevation contour lines as primary visual element
-- Optional street overlay
-- **Good for**: Mountainous regions, coastal areas, anywhere with terrain
-- **Typography**: Clean and technical, or vintage naturalist style
-
-### 3. Vintage/Antique Cartography
-- Parchment/cream backgrounds
-- Warm sepia and ink tones
-- Decorative, hand-drawn feel
-- **Good for**: Historic cities, sentimental pieces
-- **Typography**: Serif, ornate, possibly with flourishes (e.g., Playfair Display, IM Fell)
-
-### 4. Blueprint/Technical
-- White or cyan lines on deep blue background
-- Grid overlays, coordinate markers
-- Precise, architectural feel
-- **Good for**: Urban areas, architectural landmarks
-- **Typography**: Monospace or drafting-style (e.g., IBM Plex Mono, Courier)
-
-### 5. Watercolor/Painted
-- Soft edges, color bleeds
-- Parks and water as color washes
-- Organic, artistic interpretation
-- **Good for**: Gift pieces, areas with parks/water features
-- **Typography**: Hand-lettered or script style
-
-### 6. Dark Mode / Noir
-- Dark backgrounds (black, navy, charcoal)
-- Luminous/glowing streets
-- Dramatic, cinematic
-- **Good for**: Urban areas, modern aesthetic
-- **Typography**: High contrast, metallics, modern sans-serif
-
-### 7. Isometric / 3D
-- Buildings rendered with height
-- Model/diorama appearance
-- **Good for**: Dense urban cores with skylines
-- **Typography**: Floating or on separate plane
-- **Note**: More complex, may require building height data from OSM
-
-### 8. Abstract/Artistic
-- Map data as raw material for art
-- Neighborhoods as color blocks, stylized shapes
-- Less literal, more expressive
-- **Good for**: Artistic interpretation, less about navigation
-- **Typography**: Integrated into composition
-
----
-
-## Customization Options
-
-### Per-Style Color Palettes
-Each style should have 3-5 preset color palettes, plus custom color picker for:
-- Background color
-- Primary line/feature color
-- Secondary/accent color
-- Water color
-- Green space color
-- Text color
-
-### Typography Controls
-- Location name (large, prominent)
-- Optional subtitle (coordinates, country, custom text)
-- Font family selection (curated list per style)
-- Font size/weight adjustments
-- Text position (top, bottom, centered)
-
-### Layer Toggles
-- Streets (major/minor)
-- Buildings
-- Water bodies
-- Parks/green space
-- Terrain/contours
-- Labels (usually off for art prints)
-
-### Poster Format
-- Aspect ratio presets: 2:3, 3:4, 4:5, 1:1, custom
-- Orientation: Portrait/Landscape
-- Border/margin options
-
----
-
-## Export Requirements
-
-### Resolution Targets
-- **Preview**: Screen resolution, fast rendering
-- **Print Export**: 
-  - Small (12x18"): 3600x5400px at 300 DPI
-  - Medium (18x24"): 5400x7200px at 300 DPI  
-  - Large (24x36"): 7200x10800px at 300 DPI
-  - Custom dimensions with DPI selector
-
-### File Formats
-- **PNG**: Default, transparent background option
-- **PDF**: Vector where possible, better for some print shops
-- **SVG**: If feasible for simpler styles (may be complex)
-
-### Export Process
-1. User clicks Export
-2. Show export options modal (size, format, DPI)
-3. Show loading state with progress if possible
-4. Render map at target resolution (may need to tile/stitch for very large)
-5. Composite text overlays
-6. Trigger download
-
----
-
-## Data Architecture
-
-### Location State
-```typescript
-interface PosterLocation {
-  name: string;
-  subtitle?: string;
-  center: [number, number]; // [lng, lat]
-  bounds: [[number, number], [number, number]]; // SW, NE corners
-  zoom: number;
-}
-```
-
-### Style Configuration
-```typescript
-interface PosterStyle {
-  id: string;
-  name: string;
-  description: string;
-  thumbnail: string;
-  mapStyle: MapLibreStyle; // Full MapLibre style spec
-  defaultPalette: ColorPalette;
-  palettes: ColorPalette[];
-  recommendedFonts: string[];
-  layerToggles: LayerToggle[];
-}
-
-interface ColorPalette {
-  id: string;
-  name: string;
-  background: string;
-  primary: string;
-  secondary: string;
-  water: string;
-  greenSpace: string;
-  text: string;
-}
-```
-
-### Poster Configuration (Full State)
-```typescript
-interface PosterConfig {
-  location: PosterLocation;
-  style: PosterStyle;
-  palette: ColorPalette;
-  typography: {
-    titleFont: string;
-    titleSize: number;
-    titleWeight: number;
-    subtitleFont: string;
-    subtitleSize: number;
-    position: 'top' | 'bottom' | 'center';
-  };
-  format: {
-    aspectRatio: string;
-    orientation: 'portrait' | 'landscape';
-    margin: number;
-  };
-  layers: {
-    streets: boolean;
-    buildings: boolean;
-    water: boolean;
-    parks: boolean;
-    terrain: boolean;
-    labels: boolean;
-  };
-}
-```
-
----
-
-## UI Layout Concept
-
-### Desktop (Primary Target)
-```
-+------------------------------------------+
-|  Logo    [Location Search]        [Export]|
-+----------+-------------------------------+
-|          |                               |
-|  Style   |                               |
-|  Panel   |      Map Preview              |
-|          |      (Live updating)          |
-| -------- |                               |
-|  Colors  |                               |
-| -------- |      [Location Name]          |
-|  Text    |      [Subtitle/Coords]        |
-| -------- |                               |
-|  Layers  |                               |
-|          |                               |
-+----------+-------------------------------+
-```
-
-### Mobile
-- Simplified flow, bottom sheet for controls
-- May limit export resolution options
-
----
-
-## Implementation Phases
-
-### Phase 1: Core MVP
-- Location search with geocoding (Nominatim or similar)
-- Map display with MapLibre
-- 2-3 initial styles (Minimal, Dark Mode, Blueprint)
-- Basic color customization
-- Text overlay with location name
-- PNG export at fixed resolution
-
-### Phase 2: Style Expansion
-- Full style library
-- Multiple palettes per style
-- Typography customization
-- Layer toggles
-- Format/aspect ratio options
-
-### Phase 3: High-Res Export
-- Multi-resolution export options
-- Progress indicator for large exports
-- PDF export
-- Possibly tiled rendering for very large outputs
-
-### Phase 4: Polish & Features
-- Save/load poster configurations
-- Share links
-- Gallery of examples
-- Print partner integration (optional)
-
----
-
-## Technical Considerations
-
-### MapLibre Style Customization
-- Base styles will need to be created/modified for each aesthetic
-- Consider using style expressions for dynamic color swapping
-- May need to self-host or adapt existing open styles
-
-### Performance
-- High-res export is CPU/memory intensive
-- Consider Web Workers for export processing
-- May need to warn users about export time for large sizes
-- Debounce style updates during customization
-
-### Tile Sources
-- Need reliable, free-tier-friendly tile sources
-- OpenFreeMap: Free, no API key, based on OpenMapTiles schema
-- MapTiler: Free tier with API key, good style support
-- Stadia Maps: Free tier available
-- Protomaps: PMTiles format, can self-host
-
-### Fonts
-- Google Fonts for web display
-- Need to embed fonts in export (may need canvas font loading strategy)
-
----
-
-## Open Questions
-
-1. **Terrain data**: Best source for contour/elevation data that's free and global?
-2. **Building heights**: OSM has some, but coverage varies - how to handle missing data?
-3. **Export approach**: Canvas-based vs. server-side rendering for very large exports?
-4. **State management**: URL-based state for shareability? Local storage for persistence?
-
----
-
-## Reference & Inspiration
-
-- Mapbox Studio style editor (for style authoring patterns)
-- Grafomap, Mapiful (commercial map poster products)
-- Stamen maps (Toner, Watercolor - artistic map styles)
-- OS OpenData stylesheets (cartographic design)
-
----
-
-## Environment Variables
-
-Optional configuration for Nominatim geocoding API (in `frontend/.env.local`):
-
-```bash
-# User-Agent header for Nominatim API requests
-# Format: "app-name (contact-url-or-email)"
-# Example: NOMINATIM_USER_AGENT=carto-art (https://yourdomain.com)
-NOMINATIM_USER_AGENT=
-
-# From email header for Nominatim API requests (optional but recommended)
-# Nominatim prefers contact information for API usage
-# Example: NOMINATIM_FROM_EMAIL=you@yourdomain.com
-NOMINATIM_FROM_EMAIL=
-```
-
-These are optional - defaults will work for development. For production, it's recommended to set these to comply with Nominatim's usage policy.
 
 ## Getting Started
 
-1. Set up Next.js project with TypeScript and Tailwind
-2. Integrate MapLibre GL JS with React
-3. Implement location search with Nominatim API
-4. Create first style definition (recommend starting with Minimal Line Art)
-5. Build basic UI shell with map preview and controls panel
-6. Implement text overlay system
-7. Add PNG export functionality
-8. Iterate from there
+### Prerequisites
+- Node.js 18+
+- npm or pnpm
+
+### Installation
+
+```bash
+cd frontend
+npm install
+```
+
+### Environment Variables
+
+Create a `.env.local` file in the `frontend/` directory:
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Claude API (for AI features)
+ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Google Analytics (optional)
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+
+# Nominatim geocoding (optional, defaults work for development)
+NOMINATIM_USER_AGENT=carto-art (https://yourdomain.com)
+NOMINATIM_FROM_EMAIL=you@yourdomain.com
+```
+
+### Development
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+### Build
+
+```bash
+npm run build
+```
 
 ---
 
-Let me know if you need clarification on any section or want to dive deeper into a specific area.
+## Core User Flow
+
+1. **Search/Select Location** - Enter a place name or coordinates
+2. **Adjust Bounds** - Pan/zoom to frame exactly what you want
+3. **Choose Style** - Select from 11 artistic styles
+4. **Customize** - Tweak colors, toggle layers, adjust typography
+5. **Preview** - See the poster as it will appear with text overlay
+6. **Export** - Download high-DPI image ready for printing
+
+---
+
+## Project Structure
+
+```
+carto-art/
+├── frontend/
+│   ├── app/                 # Next.js App Router pages
+│   ├── components/          # React components
+│   ├── hooks/               # Custom React hooks
+│   ├── lib/                 # Utilities and configurations
+│   │   ├── styles/          # 11 map style definitions
+│   │   └── supabase/        # Database client
+│   └── types/               # TypeScript type definitions
+├── claude.md                # Development context
+├── design.md                # Design guidelines
+├── readme.md                # This file
+└── STATUS.md                # Implementation status
+```
+
+---
+
+## Documentation
+
+- **STATUS.md** - Current implementation status
+- **claude.md** - Development context and technical details
+- **design.md** - Design guidelines for colors, typography, and composition
+
+---
+
+## License
+
+MIT

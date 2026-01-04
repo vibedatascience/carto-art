@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata = {
-  title: 'Login | CartoArt',
+  title: 'Login | Cartistry',
   description: 'Sign in to save and share your map posters',
 };
 
@@ -31,7 +31,7 @@ export default async function LoginPage({
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-              Welcome to CartoArt
+              Welcome to Cartistry
             </h1>
             <p className="text-slate-600 dark:text-slate-400">
               Sign in to save, publish, and share your map posters

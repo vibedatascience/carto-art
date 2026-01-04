@@ -1,7 +1,7 @@
 import { FeedClient } from '@/components/feed/FeedClient';
 
 export const metadata = {
-  title: 'Browse Maps | CartoArt',
+  title: 'Browse Maps | Cartistry',
   description: 'Discover beautiful map posters created by the community',
 };
 

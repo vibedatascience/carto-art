@@ -1,45 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Map Poster Generator - Frontend
+
+This is the frontend application for the Map Poster Generator, built with Next.js 16.1.1 and React.
 
 ## Environment Variables
 
-Create a `.env.local` file in the `frontend/` directory with the following variables:
+Create a `.env.local` file in this directory with the following variables:
 
 ```bash
-# Google Analytics ID (optional - leave empty to disable analytics)
-NEXT_PUBLIC_GA_ID=G-3TZH3H4MVW
+# Supabase (required for auth and data persistence)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Claude API (required for AI Creator feature)
+ANTHROPIC_API_KEY=your_anthropic_api_key
+
+# Google Analytics (optional - leave empty to disable analytics)
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+
+# Nominatim geocoding (optional, defaults work for development)
+# User-Agent header for Nominatim API requests
+# Format: "app-name (contact-url-or-email)"
+NOMINATIM_USER_AGENT=carto-art (https://yourdomain.com)
+
+# From email header for Nominatim API requests
+NOMINATIM_FROM_EMAIL=you@yourdomain.com
 ```
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+frontend/
+├── app/                     # Next.js App Router pages
+│   ├── api/                 # API routes
+│   │   ├── ai/generate/     # AI generation endpoint
+│   │   ├── geocode/         # Geocoding proxy
+│   │   ├── publish/         # Map publishing
+│   │   └── tiles/           # Tile proxy
+│   ├── ai/                  # AI Creator page
+│   ├── feed/                # Community feed
+│   ├── login/               # Authentication
+│   ├── map/[id]/            # Shared map view
+│   └── profile/             # User profile
+├── components/
+│   ├── auth/                # Auth components
+│   ├── comments/            # Comment system
+│   ├── controls/            # Editor control panels
+│   ├── layout/              # Layout components
+│   ├── map/                 # Map rendering components
+│   ├── profile/             # Profile components
+│   └── ui/                  # Shared UI components
+├── hooks/
+│   ├── useMapExport.ts      # Export functionality
+│   └── usePosterConfig.ts   # State management
+├── lib/
+│   ├── actions/             # Server actions
+│   ├── ai/                  # AI configuration
+│   ├── export/              # Export utilities
+│   ├── geocoding/           # Nominatim integration
+│   ├── styles/              # 11 map style definitions
+│   └── supabase/            # Database client
+└── types/
+    └── poster.ts            # TypeScript type definitions
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 11 map styles with 40+ color palettes
+- Real-time map preview with MapLibre GL JS
+- High-resolution PNG export (up to 10800x14400px)
+- AI-powered map generation
+- User authentication via Supabase
+- Community feed with publishing and comments
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 16.1.1 with App Router
+- TypeScript
+- Tailwind CSS 4.x
+- MapLibre GL JS 4.7.1
+- React Map GL 7.1.9
+- Supabase for auth and database

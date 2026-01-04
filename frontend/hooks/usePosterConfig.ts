@@ -113,8 +113,8 @@ export function usePosterConfig() {
   const urlUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [config, dispatch] = useReducer(posterReducer, DEFAULT_CONFIG);
-  // Start with false - only enable auto-locate AFTER confirming no URL state
-  const [shouldAutoLocate, setShouldAutoLocate] = useState(false);
+  // Auto-locate disabled - always use default location
+  const [shouldAutoLocate] = useState(false);
   // Track if we've completed the initial load (prevents URL sync from overwriting on first render)
   const [isReady, setIsReady] = useState(false);
 
@@ -126,17 +126,10 @@ export function usePosterConfig() {
     if (stateParam) {
       const decoded = decodeConfig(stateParam);
       if (decoded) {
-        // URL has state - don't auto-locate, apply the decoded config
+        // URL has state - apply the decoded config
         hasLoadedFromUrl.current = true;
-        setShouldAutoLocate(false);
         dispatch({ type: 'SET_CONFIG', payload: { ...DEFAULT_CONFIG, ...decoded } });
-      } else {
-        // URL state was invalid - allow auto-locate
-        setShouldAutoLocate(true);
       }
-    } else {
-      // No URL state - enable auto-locate to user's location
-      setShouldAutoLocate(true);
     }
     isInitialized.current = true;
     // Mark as ready after a brief delay to let the config update propagate
@@ -237,14 +230,12 @@ export function usePosterConfig() {
   }, [config, pathname, router, searchParams, isReady]);
 
   const setConfig = useCallback((config: PosterConfig) => {
-    setShouldAutoLocate(false);
     dispatch({ type: 'SET_CONFIG', payload: config });
   }, []);
 
   const handleUserLocationFound = useCallback((location: PosterLocation) => {
     if (shouldAutoLocate) {
       dispatch({ type: 'SET_LOCATION', payload: location });
-      setShouldAutoLocate(false); // Only auto-locate once
     }
   }, [shouldAutoLocate]);
 
@@ -252,7 +243,6 @@ export function usePosterConfig() {
   useUserLocation(handleUserLocationFound, shouldAutoLocate);
 
   const updateLocation = useCallback((location: Partial<PosterLocation>) => {
-    setShouldAutoLocate(false);
     dispatch({ type: 'UPDATE_LOCATION', payload: location });
   }, []);
 
@@ -281,7 +271,6 @@ export function usePosterConfig() {
       historyIndexRef.current--;
       isUndoRedoRef.current = true;
       dispatch({ type: 'SET_CONFIG', payload: cloneConfig(historyRef.current[historyIndexRef.current]) });
-      setShouldAutoLocate(false);
     }
   }, []);
 
@@ -290,7 +279,6 @@ export function usePosterConfig() {
       historyIndexRef.current++;
       isUndoRedoRef.current = true;
       dispatch({ type: 'SET_CONFIG', payload: cloneConfig(historyRef.current[historyIndexRef.current]) });
-      setShouldAutoLocate(false);
     }
   }, []);
 

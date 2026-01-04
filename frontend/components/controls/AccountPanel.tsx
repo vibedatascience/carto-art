@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
-import { Button } from '@/components/ui/control-components';
 import { useRouter } from 'next/navigation';
 import {
   LogIn,
@@ -12,14 +11,18 @@ import {
   Map,
   Share2,
   Compass,
-  Settings,
   Upload,
   EyeOff,
-  MessageCircle
+  MessageCircle,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 import { PublishModal } from '@/components/profile/PublishModal';
 import { publishMap, unpublishMap } from '@/lib/actions/maps';
+import { ControlSection } from '@/components/ui/control-components';
 
 interface AccountPanelProps {
   onShareMap?: () => void;
@@ -45,6 +48,7 @@ export function AccountPanel({
   const [showPublishModal, setShowPublishModal] = useState(false);
   const supabase = createClient();
   const router = useRouter();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -75,29 +79,23 @@ export function AccountPanel({
       return;
     }
 
-    // Copy current URL to clipboard
     try {
       await navigator.clipboard.writeText(window.location.href);
-
-      // Show temporary success message
       const button = document.querySelector('[data-share-button]');
       if (button) {
         const originalText = button.textContent;
-        button.textContent = 'Link Copied!';
+        button.textContent = 'Copied!';
         setTimeout(() => {
-          button.textContent = originalText || 'Share This Map';
+          button.textContent = originalText || 'Share';
         }, 2000);
       }
     } catch (err) {
       console.error('Failed to copy URL:', err);
-      alert('Failed to copy link. Please try again.');
     }
   };
 
   const handlePublish = async (subtitle?: string) => {
-    if (!currentMapId) {
-      return;
-    }
+    if (!currentMapId) return;
 
     try {
       await publishMap(currentMapId, subtitle);
@@ -105,234 +103,166 @@ export function AccountPanel({
       setShowPublishModal(false);
     } catch (error: any) {
       console.error('Failed to publish map:', error);
-      throw error; // Let modal handle the error
+      throw error;
     }
   };
 
   const handleUnpublish = async () => {
     if (!currentMapId) return;
-
-    if (!confirm('Are you sure you want to unpublish this map?')) return;
+    if (!confirm('Unpublish this map?')) return;
 
     try {
       await unpublishMap(currentMapId);
       onPublishSuccess?.();
     } catch (error: any) {
       console.error('Failed to unpublish map:', error);
-      alert('Failed to unpublish map. Please try again.');
     }
   };
 
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
-        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+      <div className="space-y-2 animate-pulse">
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded" />
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded" />
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Account Status */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-          Account
-        </h3>
+  const ActionButton = ({
+    icon: Icon,
+    label,
+    onClick,
+    primary = false,
+    ...props
+  }: {
+    icon: any;
+    label: string;
+    onClick: () => void;
+    primary?: boolean;
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors",
+        primary
+          ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+      )}
+      {...props}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </button>
+  );
 
+  return (
+    <div className="space-y-4">
+      <ControlSection title="Account">
         {user ? (
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div className="flex items-start gap-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full">
-                <UserIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Signed in
-                </p>
-                <p className="text-xs text-gray-600 dark:text-gray-400 truncate mt-0.5">
-                  {user.email}
-                </p>
-              </div>
+          <div className="flex items-center gap-2 py-1">
+            <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <UserIcon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
             </div>
-          </div>
-        ) : (
-          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Sign in to save your maps and share them with others
+            <p className="text-xs text-gray-600 dark:text-gray-400 truncate flex-1">
+              {user.email}
             </p>
           </div>
+        ) : (
+          <p className="text-[10px] text-gray-500 dark:text-gray-400">
+            Sign in to save maps
+          </p>
         )}
-      </div>
+      </ControlSection>
 
-      {/* Current Map Status - Only show if editing a saved map */}
       {currentMapId && currentMapStatus && user && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
-            Current Map
-          </h3>
-
-          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  Editing
-                </p>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {currentMapName}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                {currentMapStatus.isPublished && (
-                  <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded">
-                    Published
-                  </span>
-                )}
-                {currentMapStatus.hasUnsavedChanges && (
-                  <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-medium rounded">
-                    Unsaved Changes
-                  </span>
-                )}
-              </div>
-
-              {currentMapStatus.isPublished ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-3"
-                  onClick={handleUnpublish}
-                >
-                  <EyeOff className="w-4 h-4" />
-                  Unpublish from Feed
-                </Button>
-              ) : (
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="w-full justify-start gap-3"
-                  onClick={() => setShowPublishModal(true)}
-                >
-                  <Upload className="w-4 h-4" />
-                  Publish to Feed
-                </Button>
+        <ControlSection title="Current Map">
+          <div className="space-y-2">
+            <p className="text-xs text-gray-700 dark:text-gray-300 truncate">{currentMapName}</p>
+            <div className="flex items-center gap-1.5">
+              {currentMapStatus.isPublished && (
+                <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[9px] rounded">
+                  Published
+                </span>
               )}
-
-              {currentMapStatus.hasUnsavedChanges && !currentMapStatus.isPublished && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Note: Publishing will share the last saved version
-                </p>
+              {currentMapStatus.hasUnsavedChanges && (
+                <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[9px] rounded">
+                  Unsaved
+                </span>
               )}
             </div>
+            {currentMapStatus.isPublished ? (
+              <ActionButton icon={EyeOff} label="Unpublish" onClick={handleUnpublish} />
+            ) : (
+              <ActionButton icon={Upload} label="Publish" onClick={() => setShowPublishModal(true)} primary />
+            )}
           </div>
-        </div>
+        </ControlSection>
       )}
 
-      {/* Action Buttons */}
-      <div className="space-y-2">
-        {user ? (
-          <>
-            <Button
-              variant="default"
-              className="w-full justify-start gap-3"
-              onClick={() => router.push('/profile')}
-            >
-              <Map className="w-4 h-4" />
-              My Maps
-            </Button>
+      <ControlSection title="Navigation">
+        <div className="space-y-0.5">
+          {user ? (
+            <>
+              <ActionButton icon={Map} label="My Maps" onClick={() => router.push('/profile')} primary />
+              <ActionButton icon={Compass} label="Browse Feed" onClick={() => router.push('/feed')} />
+              <ActionButton icon={MessageCircle} label="Discord" onClick={() => window.open('https://discord.gg/UVKEfcfZVc', '_blank')} />
+              <ActionButton icon={Share2} label="Share" onClick={handleShareMap} data-share-button />
+              <div className="pt-1.5 mt-1.5 border-t border-gray-100 dark:border-gray-800">
+                <ActionButton icon={LogOut} label="Sign Out" onClick={handleSignOut} />
+              </div>
+            </>
+          ) : (
+            <>
+              <ActionButton icon={LogIn} label="Sign In" onClick={() => router.push('/login')} primary />
+              <ActionButton icon={Compass} label="Browse Feed" onClick={() => router.push('/feed')} />
+              <ActionButton icon={MessageCircle} label="Discord" onClick={() => window.open('https://discord.gg/UVKEfcfZVc', '_blank')} />
+              <ActionButton icon={Share2} label="Share" onClick={handleShareMap} data-share-button />
+            </>
+          )}
+        </div>
+      </ControlSection>
 
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3"
-              onClick={() => router.push('/feed')}
-            >
-              <Compass className="w-4 h-4" />
-              Browse Feed
-            </Button>
+      <ControlSection title="Appearance">
+        <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
+          <button
+            onClick={() => setTheme('light')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[10px] transition-colors",
+              theme === 'light'
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            )}
+          >
+            <Sun className="w-3 h-3" />
+            Light
+          </button>
+          <button
+            onClick={() => setTheme('dark')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[10px] transition-colors",
+              theme === 'dark'
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            )}
+          >
+            <Moon className="w-3 h-3" />
+            Dark
+          </button>
+          <button
+            onClick={() => setTheme('system')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-[10px] transition-colors",
+              theme === 'system'
+                ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            )}
+          >
+            <Monitor className="w-3 h-3" />
+            Auto
+          </button>
+        </div>
+      </ControlSection>
 
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3"
-              onClick={() => window.open('https://discord.gg/UVKEfcfZVc', '_blank', 'noopener,noreferrer')}
-            >
-              <MessageCircle className="w-4 h-4" />
-              Join Discord
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3"
-              onClick={handleShareMap}
-              data-share-button
-            >
-              <Share2 className="w-4 h-4" />
-              Share This Map
-            </Button>
-
-            <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 text-gray-600 dark:text-gray-400"
-                onClick={handleSignOut}
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <Button
-              variant="default"
-              className="w-full justify-start gap-3"
-              onClick={() => router.push('/login')}
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3"
-              onClick={() => router.push('/feed')}
-            >
-              <Compass className="w-4 h-4" />
-              Browse Feed
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3"
-              onClick={() => window.open('https://discord.gg/UVKEfcfZVc', '_blank', 'noopener,noreferrer')}
-            >
-              <MessageCircle className="w-4 h-4" />
-              Join Discord
-            </Button>
-
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-3"
-              onClick={handleShareMap}
-              data-share-button
-            >
-              <Share2 className="w-4 h-4" />
-              Share This Map
-            </Button>
-          </>
-        )}
-      </div>
-
-      {/* Info Section */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {user
-            ? 'Your maps are automatically saved to your account'
-            : 'Sign in to save unlimited maps and access them from any device'
-          }
-        </p>
-      </div>
-
-      {/* Publish Modal */}
       {showPublishModal && currentMapId && currentMapName && (
         <PublishModal
           isOpen={showPublishModal}

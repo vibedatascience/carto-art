@@ -13,18 +13,18 @@ const getStyle = (id: string) => styles.find(s => s.id === id) || styles[0];
 
 export const POSTER_EXAMPLES: PosterExample[] = [
   {
-    id: 'chesapeake',
-    name: 'Chesapeake Bay',
-    description: 'Vintage nautical style showing the vast bay network.',
+    id: 'scottish-highlands',
+    name: 'Scottish Highlands',
+    description: 'Vintage nautical style showing the rugged coastline and lochs.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
-        name: 'Chesapeake Bay',
-        city: 'The Chesapeke',
-        subtitle: 'United States',
-        center: [-76.17419096218805, 37.8593958816429] as [number, number],
-        bounds: [[-76.35, 36.75], [-75.75, 37.15]] as [[number, number], [number, number]],
-        zoom: 7.381973990444137,
+        name: 'Scottish Highlands',
+        city: 'The Highlands',
+        subtitle: 'Scotland',
+        center: [-5.2, 57.1] as [number, number],
+        bounds: [[-6.5, 56.2], [-4.0, 58.0]] as [[number, number], [number, number]],
+        zoom: 7.4,
       },
       style: getStyle('vintage'),
       palette: getStyle('vintage').palettes.find(p => p.id === 'vintage-parchment') || getStyle('vintage').defaultPalette,
@@ -63,17 +63,17 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   },
   {
-    id: 'salt-lake-city',
-    name: 'Salt Lake City',
-    description: 'Dramatic "Midnight" view of the city between the mountains and the lake.',
+    id: 'hong-kong-midnight',
+    name: 'Hong Kong',
+    description: 'Dramatic "Midnight" view of the city between mountains and harbor.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
-        name: 'Salt Lake City',
-        city: 'Salt Lake City, UT',
-        subtitle: 'Utah, United States',
-        center: [-111.886797, 40.7596198] as [number, number],
-        bounds: [[-112.1013916, 40.6999263], [-111.7404843, 40.8533905]] as [[number, number], [number, number]],
+        name: 'Hong Kong',
+        city: 'Hong Kong',
+        subtitle: 'China',
+        center: [114.1694, 22.3193] as [number, number],
+        bounds: [[113.82, 22.15], [114.45, 22.55]] as [[number, number], [number, number]],
         zoom: 10,
       },
       style: getStyle('midnight'),
@@ -128,18 +128,18 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   },
   {
-    id: 'tucson-minimal',
-    name: 'Tucson',
-    description: 'A clean "Minimal" look at the Arizona desert city.',
+    id: 'berlin-minimal',
+    name: 'Berlin',
+    description: 'A clean "Minimal" look at the German capital.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
-        name: 'Tucson',
-        city: 'Tucson, AZ',
-        subtitle: 'Arizona, United States',
-        center: [-110.96359522925843, 32.158429280115655] as [number, number],
-        bounds: [[-111.15, 32.05], [-110.75, 32.35]] as [[number, number], [number, number]],
-        zoom: 9.799049962367631,
+        name: 'Berlin',
+        city: 'Berlin',
+        subtitle: 'Germany',
+        center: [13.405, 52.52] as [number, number],
+        bounds: [[13.1, 52.35], [13.7, 52.68]] as [[number, number], [number, number]],
+        zoom: 10,
       },
       style: getStyle('minimal'),
       palette: getStyle('minimal').palettes.find(p => p.id === 'minimal-navy') || getStyle('minimal').defaultPalette,
@@ -194,17 +194,17 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   },
   {
-    id: 'san-francisco-dark',
-    name: 'San Francisco Noir',
-    description: 'A striking "Dark Mode" view of San Francisco with silver highlights.',
+    id: 'chicago-noir',
+    name: 'Chicago Noir',
+    description: 'A striking "Dark Mode" view of Chicago with silver highlights.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
-        name: 'San Francisco',
-        city: 'San Francisco, CA',
-        subtitle: 'California, USA',
-        center: [-122.4194, 37.7749] as [number, number],
-        bounds: [[-122.5179, 37.7038], [-122.3774, 37.8324]] as [[number, number], [number, number]],
+        name: 'Chicago',
+        city: 'Chicago, IL',
+        subtitle: 'Illinois, USA',
+        center: [-87.6298, 41.8781] as [number, number],
+        bounds: [[-87.85, 41.72], [-87.45, 42.05]] as [[number, number], [number, number]],
         zoom: 12,
       },
       style: getStyle('dark-mode'),
@@ -260,18 +260,18 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   },
   {
-    id: 'the-channel-neon',
-    name: 'The Channel Neon',
-    description: 'Vibrant neon glow over the English Channel.',
+    id: 'tokyo-neon',
+    name: 'Tokyo Neon',
+    description: 'Vibrant neon glow over the Tokyo metropolis.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
-        name: 'The Channel',
-        city: 'The Channel',
-        subtitle: 'English Channel',
-        center: [1.171034135519335, 50.52543799494359] as [number, number],
-        bounds: [[-111.15, 32.05], [-110.75, 32.35]] as [[number, number], [number, number]],
-        zoom: 5.805587920440557,
+        name: 'Tokyo',
+        city: 'Tokyo',
+        subtitle: 'Japan',
+        center: [139.75, 35.68] as [number, number],
+        bounds: [[139.5, 35.5], [140.0, 35.9]] as [[number, number], [number, number]],
+        zoom: 10,
       },
       style: getStyle('dark-mode'),
       palette: getStyle('dark-mode').palettes.find(p => p.id === 'dark-neon') || getStyle('dark-mode').defaultPalette,
@@ -326,18 +326,18 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   },
   {
-    id: 'organic-north-america',
-    name: 'Organic North America',
-    description: 'A vibrant "Organic" style view of the North American continent with coral tones.',
+    id: 'caribbean-coral',
+    name: 'The Caribbean',
+    description: 'A vibrant "Organic" style view of the Caribbean islands with coral tones.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
         name: '',
-        city: 'North America',
+        city: 'The Caribbean',
         subtitle: '',
-        center: [-92.02849409103771, 9.479108070782175] as [number, number],
-        bounds: [[-77.1130377, 38.862957], [-77.1128569, 38.8630805]] as [[number, number], [number, number]],
-        zoom: 1.2854311188678398,
+        center: [-68.5, 18.0] as [number, number],
+        bounds: [[-75.0, 12.0], [-60.0, 24.0]] as [[number, number], [number, number]],
+        zoom: 5,
       },
       style: getStyle('organic'),
       palette: getStyle('organic').palettes.find(p => p.id === 'organic-coral-reef') || getStyle('organic').defaultPalette,
@@ -394,18 +394,18 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   },
   {
-    id: 'midatlantic-pueblo',
-    name: 'The Midatlantic',
-    description: 'An "Organic" style view of the Midatlantic region with pueblo tones.',
+    id: 'morocco-pueblo',
+    name: 'Morocco',
+    description: 'An "Organic" style view of Morocco with pueblo tones.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
-        name: 'The Midatlantic',
-        city: 'The Midatlantic',
+        name: 'Morocco',
+        city: 'Morocco',
         subtitle: '',
-        center: [-76.20066635491213, 38.15458777720772] as [number, number],
-        bounds: [[-77.0688043, 39.0140765], [-77.0687043, 39.0141765]] as [[number, number], [number, number]],
-        zoom: 6.85796882629819,
+        center: [-7.0, 31.5] as [number, number],
+        bounds: [[-12.0, 27.5], [-1.0, 35.5]] as [[number, number], [number, number]],
+        zoom: 5.5,
       },
       style: getStyle('organic'),
       palette: getStyle('organic').palettes.find(p => p.id === 'organic-pueblo') || getStyle('organic').defaultPalette,
@@ -460,18 +460,18 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   },
   {
-    id: 'north-america-botanical',
-    name: 'North America Botanical',
-    description: 'A circular "Watercolor" view of the North American continent with botanical tones.',
+    id: 'new-zealand-botanical',
+    name: 'New Zealand',
+    description: 'A circular "Watercolor" view of New Zealand with botanical tones.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
         name: '',
-        city: 'North America',
+        city: 'New Zealand',
         subtitle: '',
-        center: [-99.53825302507505, 53.34358203851335] as [number, number],
-        bounds: [[-77.1130377, 38.862957], [-77.1128569, 38.8630805]] as [[number, number], [number, number]],
-        zoom: 2.613024419786261,
+        center: [172.5, -41.5] as [number, number],
+        bounds: [[166.0, -47.5], [179.0, -34.0]] as [[number, number], [number, number]],
+        zoom: 4.5,
       },
       style: getStyle('watercolor'),
       palette: getStyle('watercolor').palettes.find(p => p.id === 'watercolor-botanical') || getStyle('watercolor').defaultPalette,
@@ -529,18 +529,18 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   },
   {
-    id: 'kennedy-space-center',
-    name: 'Kennedy Space Center',
-    description: 'A topographic survey-style view of LC-39B launch complex at Cape Canaveral.',
+    id: 'swiss-alps-topo',
+    name: 'Swiss Alps',
+    description: 'A topographic survey-style view of the Swiss Alps.',
     config: {
       ...DEFAULT_CONFIG,
       location: {
-        name: 'Kennedy Space Center',
-        city: 'LC-39B',
-        subtitle: 'Cape Canaveral, Florida, United States',
-        center: [-80.620843347, 28.62686961091171] as [number, number],
-        bounds: [[-80.5751454, 28.4377832], [-80.5686859, 28.4463163]] as [[number, number], [number, number]],
-        zoom: 14,
+        name: 'Swiss Alps',
+        city: 'The Alps',
+        subtitle: 'Switzerland',
+        center: [8.2275, 46.8182] as [number, number],
+        bounds: [[6.5, 45.8], [10.5, 47.8]] as [[number, number], [number, number]],
+        zoom: 8,
       },
       style: getStyle('topographic'),
       palette: getStyle('topographic').palettes.find(p => p.id === 'topo-survey') || getStyle('topographic').defaultPalette,
@@ -601,4 +601,3 @@ export const POSTER_EXAMPLES: PosterExample[] = [
     }
   }
 ];
-

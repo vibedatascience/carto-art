@@ -1,14 +1,29 @@
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
+  <!-- Background with subtle gradient -->
+  <rect width="32" height="32" rx="8" fill="#0a0a0a"/>
+
+  <!-- Contour lines forming a stylized 'C' shape -->
+  <path d="M22 8C22 8 12 8 10 16C8 24 18 24 22 24" stroke="url(#contour1)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.3"/>
+  <path d="M21 10C21 10 13 10 11 16C9 22 17 22 21 22" stroke="url(#contour2)" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <path d="M20 12C20 12 14 12 12 16C10 20 16 20 20 20" stroke="url(#contour3)" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.7"/>
+  <path d="M19 14C19 14 15 14 14 16C13 18 15 18 19 18" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Small artistic dot/marker -->
+  <circle cx="23" cy="11" r="2.5" fill="#ff2d95"/>
+  <circle cx="23" cy="11" r="1" fill="white" opacity="0.8"/>
+
   <defs>
-    <linearGradient id="gradient" x1="0" y1="32" x2="32" y2="0" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#2563eb"/>
-      <stop offset="1" stop-color="#4f46e5"/>
+    <linearGradient id="contour1" x1="8" y1="16" x2="24" y2="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00f5ff" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#ff2d95" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="contour2" x1="8" y1="16" x2="24" y2="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00f5ff" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#ff2d95" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="contour3" x1="8" y1="16" x2="24" y2="16" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00f5ff"/>
+      <stop offset="1" stop-color="#ff2d95"/>
     </linearGradient>
   </defs>
-  <path d="M10 11L14 9L18 11L22 9V21L18 23L14 21L10 23V11Z" fill="white" fill-opacity="0.2" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M14 9V21" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.6"/>
-  <path d="M18 11V23" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.6"/>
-  <circle cx="21" cy="12" r="3" fill="#fbbf24" stroke="white" stroke-width="1"/>
 </svg>
-

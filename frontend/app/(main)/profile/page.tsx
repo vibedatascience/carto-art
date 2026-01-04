@@ -4,7 +4,7 @@ import { getUserMaps, deleteMap, publishMap, unpublishMap } from '@/lib/actions/
 import { MyMapsList } from '@/components/profile/MyMapsList';
 
 export const metadata = {
-  title: 'My Maps | CartoArt',
+  title: 'My Maps | Cartistry',
   description: 'View and manage your saved map posters',
 };
 

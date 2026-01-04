@@ -6,56 +6,77 @@ A web application that generates beautifully stylized map posters from real geog
 
 ## Tech Stack
 
-- **Framework**: Next.js 14+ with App Router
+- **Framework**: Next.js 16.1.1 with App Router
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Map Rendering**: MapLibre GL JS with React Map GL
-- **Data Sources**: OpenStreetMap vector tiles, terrain/elevation data
+- **Styling**: Tailwind CSS 4.x
+- **Map Rendering**: MapLibre GL JS 4.7.1 with React Map GL 7.1.9
+- **Data Sources**: OpenStreetMap vector tiles via OpenFreeMap
+- **Database**: Supabase (PostgreSQL) for auth and data persistence
+- **AI**: Claude API for natural language map generation
 
 ## Project Structure
 
 ```
 carto-art/
-├── frontend/            # ✅ IMPLEMENTED
+├── frontend/
 │   ├── app/
-│   │   ├── api/tiles/[...path]/  # Tile proxy endpoint
-│   │   ├── layout.tsx            # Root layout
-│   │   ├── page.tsx              # Main page
-│   │   └── globals.css           # Global styles
+│   │   ├── api/
+│   │   │   ├── ai/generate/        # AI generation endpoint
+│   │   │   ├── geocode/            # Geocoding proxy
+│   │   │   ├── publish/            # Map publishing
+│   │   │   ├── tiles/[...path]/    # Tile proxy
+│   │   │   └── spaceports/         # Data endpoints
+│   │   ├── ai/page.tsx             # AI Creator page
+│   │   ├── feed/page.tsx           # Community feed
+│   │   ├── login/page.tsx          # Authentication
+│   │   ├── map/[id]/page.tsx       # Shared map view
+│   │   ├── profile/page.tsx        # User profile
+│   │   ├── layout.tsx              # Root layout
+│   │   ├── page.tsx                # Main editor
+│   │   └── globals.css             # Global styles
 │   ├── components/
-│   │   ├── controls/    # ✅ All 6 control components
+│   │   ├── auth/                   # Auth components
+│   │   ├── comments/               # Comment system
+│   │   ├── controls/               # Editor controls (10 components)
+│   │   │   ├── AccountPanel.tsx
 │   │   │   ├── ColorControls.tsx
+│   │   │   ├── ExamplesGallery.tsx
 │   │   │   ├── ExportButton.tsx
 │   │   │   ├── FormatControls.tsx
 │   │   │   ├── LayerControls.tsx
 │   │   │   ├── LocationSearch.tsx
+│   │   │   ├── SavedProjects.tsx
 │   │   │   ├── StyleSelector.tsx
 │   │   │   └── TypographyControls.tsx
 │   │   ├── layout/
-│   │   │   └── PosterEditor.tsx  # Main editor
-│   │   └── map/
-│   │       ├── MapPreview.tsx
-│   │       └── TextOverlay.tsx
+│   │   │   ├── ControlDrawer.tsx   # Collapsible sidebar
+│   │   │   ├── PosterEditor.tsx    # Main editor
+│   │   │   └── TabNavigation.tsx   # Sidebar navigation
+│   │   ├── map/
+│   │   │   ├── MapPreview.tsx      # MapLibre wrapper
+│   │   │   ├── PosterThumbnail.tsx # Thumbnail renderer
+│   │   │   └── TextOverlay.tsx     # Text overlay
+│   │   ├── profile/                # Profile components
+│   │   └── ui/                     # Shared UI components
 │   ├── hooks/
-│   │   ├── useMapExport.ts
-│   │   └── usePosterConfig.ts
+│   │   ├── useMapExport.ts         # Export logic
+│   │   └── usePosterConfig.ts      # State management
 │   ├── lib/
-│   │   ├── export/      # ✅ Canvas export logic
-│   │   ├── geocoding/   # ✅ Nominatim integration
-│   │   └── styles/      # ✅ 3 complete styles
-│   │       ├── minimal.ts
-│   │       ├── dark-mode.ts
-│   │       ├── blueprint.ts
-│   │       ├── applyPalette.ts
-│   │       └── index.ts
-│   ├── types/
-│   │   └── poster.ts    # ✅ Complete type definitions
-│   ├── components.json   # shadcn/ui config
-│   └── package.json
-├── .mcp.json            # MCP server config
-├── README.md            # Project specification
-├── claude.md            # This file
-└── STATUS.md            # ✅ Implementation status
+│   │   ├── actions/                # Server actions
+│   │   ├── ai/                     # AI configuration
+│   │   ├── config/                 # App configuration
+│   │   ├── export/                 # Export utilities
+│   │   ├── geocoding/              # Nominatim integration
+│   │   ├── styles/                 # 11 map styles
+│   │   ├── supabase/               # Database client
+│   │   └── utils.ts                # Utility functions
+│   └── types/
+│       └── poster.ts               # Type definitions
+├── .mcp.json                       # MCP server config
+├── README.md                       # Project specification
+├── claude.md                       # This file
+├── design.md                       # Design guide
+└── STATUS.md                       # Implementation status
 ```
 
 ## Core Types
@@ -113,6 +134,8 @@ interface PosterConfig {
     subtitleFont: string;
     subtitleSize: number;
     position: 'top' | 'bottom' | 'center';
+    letterSpacing: number;
+    allCaps: boolean;
   };
   format: {
     aspectRatio: string;
@@ -126,54 +149,58 @@ interface PosterConfig {
     parks: boolean;
     terrain: boolean;
     labels: boolean;
+    marker: boolean;
+  };
+  camera?: {
+    pitch: number;
+    bearing: number;
   };
 }
 ```
 
-## Development Phases
-
-### Phase 1: Core MVP ✅ COMPLETE
-- [x] Set up Next.js project with TypeScript and Tailwind
-- [x] Integrate MapLibre GL JS with React
-- [x] Implement location search with Nominatim API
-- [x] Create 3 initial styles (Minimal, Dark Mode, Blueprint)
-- [x] Build complete UI with all control panels
-- [x] Implement text overlay system with full customization
-- [x] Add PNG export functionality with high-res support
-- [x] Typography customization (fonts, sizes, spacing, all-caps)
-- [x] Layer toggles (streets, buildings, water, parks, labels, terrain, marker)
-- [x] Format/aspect ratio options (5 ratios, portrait/landscape)
-- [x] Multiple color palettes per style (15 total palettes)
-
-**Current Task**: Testing and refinement
-
-### Phase 2: Style Expansion (Future)
-- [ ] Add remaining 5 styles (Topographic, Vintage, Watercolor, Isometric, Abstract)
-- [ ] Add more color palettes
-- [ ] Style-specific customizations
-
-### Phase 3: High-Res Export
-- [ ] Multi-resolution export options
-- [ ] Progress indicator for large exports
-- [ ] PDF export
-- [ ] Tiled rendering for very large outputs
-
-### Phase 4: Polish & Features
-- [ ] Save/load poster configurations
-- [ ] Share links (URL-based state)
-- [ ] Gallery of examples
-- [ ] Print partner integration (optional)
-
-## Style Library
+## Style Library (11 Styles Implemented)
 
 1. **Minimal Line Art** - Streets only, monochromatic, clean
-2. **Topographic/Contour** - Elevation contours, terrain-focused
-3. **Vintage/Antique** - Parchment, sepia tones, hand-drawn feel
+2. **Dark Mode/Noir** - Dark backgrounds, luminous streets
+3. **Midnight Noir** - Deep night aesthetics
 4. **Blueprint/Technical** - Cyan lines on blue, architectural
-5. **Watercolor/Painted** - Soft edges, color washes, organic
-6. **Dark Mode/Noir** - Dark backgrounds, luminous streets
-7. **Isometric/3D** - Buildings with height, diorama appearance
+5. **Vintage/Antique** - Parchment and sepia tones
+6. **Topographic/Contour** - Elevation contours, terrain-focused
+7. **Watercolor/Painted** - Soft edges, color washes, organic
 8. **Abstract/Artistic** - Stylized, expressive interpretation
+9. **Atmospheric/Ethereal** - Misty, dreamy feel
+10. **Organic/Nature** - Natural color palettes
+11. **Retro/Nostalgic** - Vintage color schemes
+
+Each style includes:
+- Custom MapLibre style definition
+- Multiple color palette presets (40+ total palettes)
+- Recommended font pairings
+- Layer toggle configurations
+
+## UI Design - Minimalist Approach
+
+### Design Principles
+- **Compact controls** - Smaller text (text-xs, text-[10px], text-[11px])
+- **Subtle colors** - Gray-400/500 for secondary elements
+- **Icon-only navigation** - Clean sidebar with tooltip labels
+- **Collapsible sections** - Chevron-based expand/collapse
+- **Consistent spacing** - Tight but breathable layout
+- **No unnecessary decoration** - Focus on content
+
+### Navigation Structure
+- **Sidebar (left)**: Icon-only navigation
+  - Logo (home link)
+  - AI Creator (sparkles icon)
+  - Library (grid icon)
+  - Design (sliders icon)
+  - Account (user icon - bottom)
+- **Consistent across all pages** - Main editor and AI page share same navigation
+
+### Control Panel Tabs
+- **Library**: Examples gallery + Saved projects
+- **Design**: Location, Style & Colors, Text & Labels, Format & Frame
+- **Account**: User info, navigation links, publish controls
 
 ## Key Technical Considerations
 
@@ -185,19 +212,17 @@ interface PosterConfig {
 
 ### Tile Sources
 - **OpenFreeMap**: Free, no API key, OpenMapTiles schema
-- **MapTiler**: Free tier with API key
-- **Protomaps**: PMTiles format, can self-host
 
 ### Export Strategy
 - Render map at higher resolution than screen display
 - Composite map canvas with text overlays using Canvas API
-- Target sizes: up to 24x36 inches at 300 DPI (7200x10800 pixels)
-- Consider Web Workers for large export processing
+- Target sizes: up to 36x48 inches at 300 DPI (10800x14400 pixels)
+- Multiple resolution presets available
 
 ### State Management
-- Consider URL-based state for shareability
-- Local storage for persistence
-- React Context or Zustand for app state
+- URL-based state for shareability
+- Supabase for persistence
+- Custom React hooks for app state
 
 ### Performance
 - Debounce style updates during customization
@@ -218,7 +243,7 @@ interface PosterConfig {
 ## Common Tasks
 
 ### Adding a New Style
-1. Create MapLibre style JSON in `src/lib/styles/`
+1. Create MapLibre style JSON in `lib/styles/`
 2. Define default color palettes
 3. Add style metadata (name, description, thumbnail)
 4. Register in style library index
@@ -229,7 +254,7 @@ interface PosterConfig {
 3. Ensure all required colors are specified
 
 ### Modifying Export Resolution
-1. Update export constants in `src/lib/export/constants.ts`
+1. Update export constants in `lib/export/constants.ts`
 2. Adjust canvas rendering logic
 3. Update UI to reflect new options
 
@@ -251,34 +276,25 @@ interface PosterConfig {
 
 ## Current Status
 
-**Phase**: Phase 1 MVP - ✅ **COMPLETE** (Ready for Testing)
+**Phase**: Production-ready
 **Location**: All implementation in `frontend/` directory
-**Dev Server**: Should be running on http://localhost:3000
+**Dev Server**: http://localhost:3000
 
 ### What's Working
-- ✅ Complete UI with 6 control panels
-- ✅ 3 map styles with 15 color palettes total
-- ✅ Real-time preview with pan/zoom
-- ✅ Location search with Nominatim
-- ✅ Full typography controls
-- ✅ Layer visibility toggles
-- ✅ Aspect ratio and format options
-- ✅ PNG export at multiple resolutions
-
-### Next Steps
-1. **Test in browser** - Verify all features work
-2. **Test export** - Try exporting at different resolutions
-3. **Bug fixes** - Address any issues found
-4. **Enhancement** - Consider adding shadcn/ui components for polish
-
-### Recent Implementation
-- All Phase 1 features built in `frontend/` directory
-- MapLibre styles with dynamic color swapping
-- Canvas-based high-resolution export (up to 7200x10800px)
-- Comprehensive state management via hooks
-- Responsive UI with dark mode support
+- 11 map styles with 40+ color palettes
+- Real-time preview with pan/zoom
+- Location search with Nominatim
+- Full typography controls
+- Layer visibility toggles
+- Aspect ratio and format options
+- PNG export at multiple resolutions (up to 10800x14400px)
+- AI-powered map generation from natural language
+- Supabase integration for auth and data
+- Community features (feed, comments, profiles)
+- Minimalist UI design with consistent navigation
 
 ---
 
 **For detailed status**, see STATUS.md
 **For full project context**, see README.md
+**For design guidelines**, see design.md

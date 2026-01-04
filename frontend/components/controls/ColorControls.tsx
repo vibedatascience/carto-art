@@ -1,12 +1,10 @@
 'use client';
 
-import { HexColorPicker } from 'react-colorful';
 import { useState } from 'react';
 import type { ColorPalette } from '@/types/poster';
 import { cn } from '@/lib/utils';
-import { ControlSection, ControlGroup, ControlLabel, ControlInput } from '@/components/ui/control-components';
-import { Check, Info } from 'lucide-react';
-import { Tooltip } from '@/components/ui/tooltip';
+import { ControlSection } from '@/components/ui/control-components';
+import { SmartColorPicker } from '@/components/ui/SmartColorPicker';
 
 interface ColorControlsProps {
   palette: ColorPalette;
@@ -14,19 +12,17 @@ interface ColorControlsProps {
   onPaletteChange: (palette: ColorPalette) => void;
 }
 
-const colorLabels: Record<string, string> = {
-  background: 'Background',
-  primary: 'Primary',
-  secondary: 'Secondary',
-  water: 'Water',
-  greenSpace: 'Green Space',
-  text: 'Text',
-  grid: 'Grid',
+const colorLabels: Record<string, { label: string; category: string }> = {
+  background: { label: 'Background', category: 'background' },
+  primary: { label: 'Primary', category: 'roads' },
+  secondary: { label: 'Secondary', category: 'roads' },
+  water: { label: 'Water', category: 'water' },
+  greenSpace: { label: 'Green Space', category: 'greenSpace' },
+  text: { label: 'Text', category: 'text' },
+  grid: { label: 'Grid', category: 'accent' },
 };
 
 export function ColorControls({ palette, presets, onPaletteChange }: ColorControlsProps) {
-  const [activeColor, setActiveColor] = useState<string | null>(null);
-
   const handleColorChange = (colorKey: string, color: string) => {
     onPaletteChange({
       ...palette,
@@ -34,9 +30,12 @@ export function ColorControls({ palette, presets, onPaletteChange }: ColorContro
     });
   };
 
-  const visibleColorKeys = Object.keys(colorLabels).filter(key => 
+  const visibleColorKeys = Object.keys(colorLabels).filter(key =>
     key in palette || (key === 'grid' && presets?.some(p => 'grid' in p))
   );
+
+  // Get palette colors for the picker
+  const paletteColors = Object.values(palette).filter(v => typeof v === 'string' && v.startsWith('#')) as string[];
 
   return (
     <div className="space-y-4">
@@ -77,45 +76,26 @@ export function ColorControls({ palette, presets, onPaletteChange }: ColorContro
 
       <ControlSection title="Custom">
         <div className="space-y-2">
-          {visibleColorKeys.map((colorKey) => (
-            <div key={colorKey} className="relative flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setActiveColor(activeColor === colorKey ? null : colorKey)}
-                className={cn(
-                  'w-6 h-6 rounded border transition-all flex-shrink-0',
-                  activeColor === colorKey
-                    ? 'border-gray-400 dark:border-gray-500'
-                    : 'border-gray-200 dark:border-gray-700'
-                )}
-                style={{ backgroundColor: (palette as any)[colorKey] }}
-                aria-label={`Select ${colorLabels[colorKey]} color`}
-              />
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 flex-1">{colorLabels[colorKey]}</span>
-              <input
-                type="text"
-                value={(palette as any)[colorKey] || ''}
-                onChange={(e) => handleColorChange(colorKey, e.target.value)}
-                className="w-20 text-[10px] font-mono text-gray-500 dark:text-gray-400 bg-transparent border-0 p-0 focus:outline-none focus:ring-0"
-                placeholder="#000000"
-              />
-              {activeColor === colorKey && (
-                <div className="absolute left-0 top-full mt-1 z-50 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-                  <div
-                    className="fixed inset-0 z-[-1]"
-                    onClick={() => setActiveColor(null)}
-                  />
-                  <HexColorPicker
-                    color={(palette as any)[colorKey] || '#000000'}
-                    onChange={(color) => handleColorChange(colorKey, color)}
-                  />
-                </div>
-              )}
-            </div>
-          ))}
+          {visibleColorKeys.map((colorKey) => {
+            const config = colorLabels[colorKey];
+            return (
+              <div key={colorKey} className="flex items-center gap-2">
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 min-w-[70px]">
+                  {config.label}
+                </span>
+                <SmartColorPicker
+                  value={(palette as any)[colorKey] || ''}
+                  onChange={(color) => handleColorChange(colorKey, color)}
+                  category={config.category}
+                  label={config.label}
+                  paletteColors={paletteColors}
+                  className="flex-1"
+                />
+              </div>
+            );
+          })}
         </div>
       </ControlSection>
     </div>
   );
 }
-

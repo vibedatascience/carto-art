@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Save, Trash2, FolderOpen, Clock, Edit2, Check, X } from 'lucide-react';
+import { Save, Trash2, FolderOpen, Edit2, Check, X } from 'lucide-react';
 import type { PosterConfig, SavedProject } from '@/types/poster';
+import { ControlSection } from '@/components/ui/control-components';
 
 interface SavedProjectsProps {
   projects: SavedProject[];
@@ -39,7 +40,7 @@ export function SavedProjects({
       await onSave(newName.trim(), currentConfig);
       setNewName('');
     } catch (err: any) {
-      setError(err.message || 'Failed to save project. Please try again.');
+      setError(err.message || 'Failed to save.');
     } finally {
       setSaving(false);
     }
@@ -54,21 +55,21 @@ export function SavedProjects({
       await onRename(id, editName.trim());
       setEditingId(null);
     } catch (err: any) {
-      setError(err.message || 'Failed to rename project. Please try again.');
+      setError(err.message || 'Failed to rename.');
     } finally {
       setRenamingId(null);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this project?') || deletingId === id) return;
+    if (!confirm('Delete this project?') || deletingId === id) return;
 
     setDeletingId(id);
     setError(null);
     try {
       await onDelete(id);
     } catch (err: any) {
-      setError(err.message || 'Failed to delete project. Please try again.');
+      setError(err.message || 'Failed to delete.');
     } finally {
       setDeletingId(null);
     }
@@ -80,15 +81,12 @@ export function SavedProjects({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Save Current Work</h3>
+    <div className="space-y-4">
+      <ControlSection title="Save">
         {error && (
-          <div className="p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-            <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
-          </div>
+          <p className="text-[10px] text-red-500 dark:text-red-400 mb-2">{error}</p>
         )}
-        <form onSubmit={handleSave} className="flex gap-2">
+        <form onSubmit={handleSave} className="flex gap-1.5">
           <input
             type="text"
             value={newName}
@@ -96,122 +94,108 @@ export function SavedProjects({
               setNewName(e.target.value);
               setError(null);
             }}
-            placeholder="Project name..."
-            className="flex-1 px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            placeholder="Name..."
+            className="flex-1 px-2 py-1.5 text-xs bg-transparent border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:border-gray-400 disabled:opacity-50"
             disabled={saving}
           />
           <button
             type="submit"
             disabled={!newName.trim() || saving}
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-md transition-colors flex items-center gap-2"
+            className="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white disabled:opacity-30 transition-colors"
           >
             {saving ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs">Saving...</span>
-              </>
+              <div className="w-3.5 h-3.5 border border-gray-400 border-t-transparent rounded-full animate-spin" />
             ) : (
-              <Save className="w-4 h-4" />
+              <Save className="w-3.5 h-3.5" />
             )}
           </button>
         </form>
-      </div>
+      </ControlSection>
 
-      <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Library ({projects.length})</h3>
-        
+      <ControlSection title={`Library (${projects.length})`}>
         {projects.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-20" />
-            <p className="text-sm">No saved projects yet.</p>
+          <div className="text-center py-4 text-gray-400 dark:text-gray-500">
+            <FolderOpen className="w-5 h-5 mx-auto mb-1 opacity-40" />
+            <p className="text-[10px]">No saved projects</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-1">
             {projects.map((project) => (
-              <div 
+              <div
                 key={project.id}
-                className="group p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-900/50 transition-all"
+                className="group flex items-center gap-2 py-1.5 px-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                onClick={() => !editingId && onLoad(project)}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    {editingId === project.id ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="text"
-                          autoFocus
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleRename(project.id)}
-                          className="flex-1 px-2 py-1 text-sm bg-white dark:bg-gray-800 border border-blue-500 rounded focus:outline-none disabled:opacity-50"
-                          disabled={renamingId === project.id}
-                        />
-                        <button 
-                          onClick={() => handleRename(project.id)} 
-                          className="p-1 text-green-600 hover:text-green-700 transition-colors disabled:opacity-50"
-                          disabled={renamingId === project.id}
-                        >
-                          {renamingId === project.id ? (
-                            <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <Check className="w-4 h-4" />
-                          )}
-                        </button>
-                        <button 
-                          onClick={() => {
-                            setEditingId(null);
-                            setError(null);
-                          }} 
-                          className="p-1 text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
-                          disabled={renamingId === project.id}
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {project.name}
-                      </h4>
-                    )}
-                    <div className="flex items-center mt-1 text-[10px] text-gray-500 dark:text-gray-400">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {new Date(project.updatedAt).toLocaleDateString()}
+                <div className="flex-1 min-w-0">
+                  {editingId === project.id ? (
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="text"
+                        autoFocus
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleRename(project.id)}
+                        className="flex-1 px-1.5 py-0.5 text-xs bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:outline-none"
+                        disabled={renamingId === project.id}
+                      />
+                      <button
+                        onClick={() => handleRename(project.id)}
+                        className="p-0.5 text-gray-500 hover:text-green-600"
+                        disabled={renamingId === project.id}
+                      >
+                        {renamingId === project.id ? (
+                          <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Check className="w-3 h-3" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingId(null);
+                          setError(null);
+                        }}
+                        className="p-0.5 text-gray-500 hover:text-red-600"
+                        disabled={renamingId === project.id}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  ) : (
+                    <>
+                      <p className="text-xs text-gray-700 dark:text-gray-300 truncate">{project.name}</p>
+                      <p className="text-[9px] text-gray-400 dark:text-gray-500">
+                        {new Date(project.updatedAt).toLocaleDateString()}
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {editingId !== project.id && (
+                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => startEditing(project)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
-                      title="Rename"
+                      className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-3 h-3" />
                     </button>
                     <button
                       onClick={() => handleDelete(project.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
-                      title="Delete"
+                      className="p-1 text-gray-400 hover:text-red-500"
                       disabled={deletingId === project.id}
                     >
                       {deletingId === project.id ? (
-                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3 h-3" />
                       )}
                     </button>
                   </div>
-                </div>
-                
-                <button
-                  onClick={() => onLoad(project)}
-                  className="w-full mt-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded transition-colors"
-                >
-                  Load Project
-                </button>
+                )}
               </div>
             ))}
           </div>
         )}
-      </div>
+      </ControlSection>
     </div>
   );
 }

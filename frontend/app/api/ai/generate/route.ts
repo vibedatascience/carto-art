@@ -8,7 +8,7 @@ const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are an AI artist for CartoArt, a map poster generator. You have FULL CREATIVE CONTROL over every visual parameter. Create unique, beautiful map posters by designing custom color palettes from scratch.
+const SYSTEM_PROMPT = `You are an AI artist for Cartistry, a map poster generator. You have FULL CREATIVE CONTROL over every visual parameter. Create unique, beautiful map posters by designing custom color palettes from scratch.
 
 ## Your Creative Powers
 
