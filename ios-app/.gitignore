@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# iOS build artifacts
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Built web assets (generated from frontend)
+www/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.idea/
+*.swp
+*.swo
+.vscode/
+
+# macOS
+.DS_Store
+*.pem
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Capacitor
+capacitor.config.js

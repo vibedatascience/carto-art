@@ -1,8 +1,9 @@
 'use client';
 
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Share2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EXPORT_RESOLUTIONS, type ExportResolutionKey } from '@/lib/export/constants';
+import { useNativePlatform } from '@/hooks/useNativePlatform';
 
 interface ExportButtonProps {
   onExport: (resolution: typeof EXPORT_RESOLUTIONS[ExportResolutionKey]) => void;
@@ -13,6 +14,11 @@ interface ExportButtonProps {
 
 export function ExportButton({ onExport, isExporting, selectedResolution, onResolutionChange }: ExportButtonProps) {
   const resolution = EXPORT_RESOLUTIONS[selectedResolution];
+  const { isNative } = useNativePlatform();
+
+  // On native iOS, show "Share" instead of "Export"
+  const buttonLabel = isNative ? 'Share Poster' : 'Export Poster';
+  const ButtonIcon = isNative ? Share2 : Download;
 
   return (
     <div className="flex flex-col gap-3">
@@ -57,7 +63,7 @@ export function ExportButton({ onExport, isExporting, selectedResolution, onReso
           "transition-transform duration-300",
           isExporting ? "scale-0 w-0" : "scale-100"
         )}>
-          <Download className="h-4 w-4" />
+          <ButtonIcon className="h-4 w-4" />
         </div>
 
         {isExporting && (
@@ -70,7 +76,7 @@ export function ExportButton({ onExport, isExporting, selectedResolution, onReso
           "transition-all duration-300",
           isExporting && "translate-x-4"
         )}>
-          {isExporting ? 'Exporting...' : 'Export Poster'}
+          {isExporting ? 'Exporting...' : buttonLabel}
         </span>
       </button>
     </div>
